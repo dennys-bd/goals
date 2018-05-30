@@ -46,6 +46,13 @@ func init() {
 	}
 }
 
+func check(err error) {
+	if msg != nil {
+		fmt.Println("Error:", msg)
+		os.Exit(1)
+	}
+}
+
 func er(msg interface{}) {
 	fmt.Println("Error:", msg)
 	os.Exit(1)

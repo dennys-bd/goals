@@ -17,9 +17,7 @@ var initCmd = &cobra.Command{
 the appropriate structure for a Go-Graphql application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		_, err := os.Getwd()
-		if err != nil {
-			er(err)
-		}
+		check(err)
 
 		var project *Project
 		if len(args) == 0 {
@@ -51,9 +49,7 @@ the appropriate structure for a Go-Graphql application.`,
 func intializeProject(project *Project) {
 	if !exists(project.AbsPath()) {
 		err := os.MkdirAll(project.AbsPath(), os.ModePerm)
-		if err != nil {
-			er(er)
-		}
+		check(err)
 	} else if !isEmpty(project.AbsPath()) {
 		er("Goals will not create a new project in a non empty directory: " + project.AbsPath())
 	}
@@ -72,9 +68,8 @@ func intializeProject(project *Project) {
 func initializeDep(project *Project) {
 	cmd := exec.Command("dep", "init", project.AbsPath())
 	err := cmd.Run()
-	if err != nil {
-		er(err)
-	}
+	check(err)
+
 }
 
 func createGQLTypes(project *Project) {
@@ -106,14 +101,11 @@ type Resolver struct{}
 	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), Templates["resolverHelper"])
 
 	err := os.MkdirAll(project.ScalarPath(), os.ModePerm)
-	if err != nil {
-		er(err)
-	}
+	check(err)
 
 	err = os.MkdirAll(project.SchemaPath(), os.ModePerm)
-	if err != nil {
-		er(err)
-	}
+	check(err)
+
 }
 
 func createAbsFiles(project *Project) {
@@ -135,11 +127,5 @@ func downloadDepedences(project *Project) {
 	cmd := exec.Command("dep", "ensure")
 	cmd.Dir = project.AbsPath()
 	err := cmd.Run()
-	if err != nil {
-		println(err)
-		er(err)
-	}
-	// --add upper.io/db.v3
-	// github.com/joho/godotenv
-	// github.com/rs/cors
+	check(err)
 }

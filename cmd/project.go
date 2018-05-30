@@ -30,9 +30,8 @@ func NewProject(projectName string) *Project {
 	// then use GOPATH/src/projectName.
 	if p.absPath == "" {
 		wd, err := os.Getwd()
-		if err != nil {
-			er(err)
-		}
+		check(err)
+
 		for _, srcPath := range srcPaths {
 			goPath := filepath.Dir(srcPath)
 			if filepathHasPrefix(wd, goPath) {
