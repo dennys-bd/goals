@@ -62,8 +62,9 @@ func intializeProject(project *Project) {
 	createGQLTypes(project)
 	createStructure(project)
 	createAbsFiles(project)
-	// createDatabase(project)
-	// createAuth(project)
+	// TODO: createDatabase(project)
+	// TODO: createAuth(project)
+	// TODO: createDotEnv(project)
 	downloadDepedences(project)
 
 }
@@ -124,9 +125,10 @@ func createAbsFiles(project *Project) {
 	procScript := executeTemplate(procTemplate, procData)
 
 	writeStringToFile(filepath.Join(project.AbsPath(), "server.go"), serverScript)
-	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), Templates["config"])
 	writeStringToFile(filepath.Join(project.AbsPath(), ".gitignore"), Templates["git"])
 	writeStringToFile(filepath.Join(project.AbsPath(), "Procfile"), procScript)
+	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), Templates["config"])
+	// TODO: Create consts.go
 }
 
 func downloadDepedences(project *Project) {
