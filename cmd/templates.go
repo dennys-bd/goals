@@ -10,4 +10,5 @@ func init() {
 	initHelpers()
 	initConfig()
 	initGit()
+	initGql()
 }

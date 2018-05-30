@@ -58,107 +58,52 @@ func intializeProject(project *Project) {
 		er("Goals will not create a new project in a non empty directory: " + project.AbsPath())
 	}
 
+	initializeDep(project)
 	createGQLTypes(project)
-	createModel(project)
-	createResolver(project)
-	createFolders(project)
-	createServerFile(project)
-	createConfigFile(project)
-	createProcFile(project)
-	createGitFile(project)
+	createStructure(project)
+	createAbsFiles(project)
 	// createDatabase(project)
+	// createAuth(project)
 	downloadDepedences(project)
 
 }
 
-func createGQLTypes(project *Project) {
+func initializeDep(project *Project) {
 	cmd := exec.Command("dep", "init", project.AbsPath())
 	err := cmd.Run()
 	if err != nil {
-
+		er(err)
 	}
-	gqlTemplate := `package gqltype
+}
 
-// {{.Gqltypes}} for graphql definition
-const {{.Gqltypes}} = "type {{.Gqltype}} {\n" +
-	my{{.Gqltypes}} + "\n" +
-	"}"
-
-// TODO: Concatenate here your {{.gqltypes}} types comming from schema
-// for User {{.Gqltypes}}: const myQueries = schema.User{{.Gqltypes}}
-const my{{.Gqltypes}} = ""
-`
-
+func createGQLTypes(project *Project) {
 	queryData := map[string]interface{}{"Gqltypes": "Queries", "Gqltype": "Query", "gqltypes": "queries"}
 	mutationData := map[string]interface{}{"Gqltypes": "Mutations", "Gqltype": "Mutation", "gqltypes": "mutations"}
 	subscriptionData := map[string]interface{}{"Gqltypes": "Subscriptions", "Gqltype": "Subscription", "gqltypes": "subscriptions"}
 
-	queryScript := executeTemplate(gqlTemplate, queryData)
-	mutationScript := executeTemplate(gqlTemplate, mutationData)
-	subscriptionScript := executeTemplate(gqlTemplate, subscriptionData)
+	queryScript := executeTemplate(Templates["gqltypes"], queryData)
+	mutationScript := executeTemplate(Templates["gqltypes"], mutationData)
+	subscriptionScript := executeTemplate(Templates["gqltypes"], subscriptionData)
 
 	writeStringToFile(filepath.Join(project.GqlPath(), "queries.go"), queryScript)
 	writeStringToFile(filepath.Join(project.GqlPath(), "mutations.go"), mutationScript)
 	writeStringToFile(filepath.Join(project.GqlPath(), "subscriptions.go"), subscriptionScript)
-
-	scalarTemplate := `package gqltype
-
-// Scalars for graphql definition
-// TODO: Write here your scalars types
-const Scalars = ` + "`" + `
-scalar Time
-` + "`" + `
-`
-	writeStringToFile(filepath.Join(project.GqlPath(), "scalars.go"), scalarTemplate)
-
-	schemaTemplate := `package gqltype
-
-// TODO: Uncomment here what you will use
-const schemaDefinition = ` + "`" + `
-schema {
-	#query: Query
-	#mutation: Mutation
-	#subscription: Subscription
-}
-` + "`" + `
-
-// Schema concatenated
-const Schema = schemaDefinition +
-	Queries +
-	Mutations +
-	Scalars +
-	Types
-`
-
-	writeStringToFile(filepath.Join(project.GqlPath(), "schema.go"), schemaTemplate)
-
-	typesTemplate := `package gqltype
-
-// Types for graphql definition
-// TODO: Concatenate here your types comming from schema
-// e.g. User Types: const Types = schema.UserTypes
-const Types = ""
-`
-
-	writeStringToFile(filepath.Join(project.GqlPath(), "types.go"), typesTemplate)
+	writeStringToFile(filepath.Join(project.GqlPath(), "scalars.go"), Templates["scalar"])
+	writeStringToFile(filepath.Join(project.GqlPath(), "schema.go"), Templates["schema"])
+	writeStringToFile(filepath.Join(project.GqlPath(), "types.go"), Templates["types"])
 }
 
-func createModel(project *Project) {
-	writeStringToFile(filepath.Join(project.ModelPath(), "helper.go"), Templates["modelHelper"])
-}
-
-func createResolver(project *Project) {
+func createStructure(project *Project) {
 	resolverTemplate := `package resolver
 
 // Resolver type for graphql
 type Resolver struct{}
 `
 
+	writeStringToFile(filepath.Join(project.ModelPath(), "helper.go"), Templates["modelHelper"])
 	writeStringToFile(filepath.Join(project.ResolverPath(), "resolver.go"), resolverTemplate)
 	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), Templates["resolverHelper"])
-}
 
-func createFolders(project *Project) {
 	err := os.MkdirAll(project.ScalarPath(), os.ModePerm)
 	if err != nil {
 		er(err)
@@ -170,26 +115,18 @@ func createFolders(project *Project) {
 	}
 }
 
-func createServerFile(project *Project) {
-	data := map[string]interface{}{"importpath": project.ImportPath()}
-	serverScript := executeTemplate(Templates["server"], data)
+func createAbsFiles(project *Project) {
+	serverData := map[string]interface{}{"importpath": project.ImportPath()}
+	serverScript := executeTemplate(Templates["server"], serverData)
+
+	procTemplate := `web: {{.appname}}`
+	procData := map[string]interface{}{"appname": project.Name()}
+	procScript := executeTemplate(procTemplate, procData)
 
 	writeStringToFile(filepath.Join(project.AbsPath(), "server.go"), serverScript)
-}
-
-func createConfigFile(project *Project) {
 	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), Templates["config"])
-}
-
-func createProcFile(project *Project) {
-	template := `web: {{.appname}}`
-	data := map[string]interface{}{"appname": project.Name()}
-	script := executeTemplate(template, data)
-	writeStringToFile(filepath.Join(project.AbsPath(), "Procfile"), script)
-}
-
-func createGitFile(project *Project) {
 	writeStringToFile(filepath.Join(project.AbsPath(), ".gitignore"), Templates["git"])
+	writeStringToFile(filepath.Join(project.AbsPath(), "Procfile"), procScript)
 }
 
 func downloadDepedences(project *Project) {
