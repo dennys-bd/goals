@@ -1,5 +1,5 @@
 # goals
-`goals` is a Golang/GraphQL Boilerplate Generator maybe a Framework.. **`goals` is still in beta release.
+`goals` is a Golang/GraphQL Boilerplate Generator maybe a Framework.. `goals` is still in beta release.
 
 # use
 `goals` has 2 commands today
@@ -7,7 +7,7 @@
 `goals init [PROJECTNAME]` should start your project unde your $GOPATH
 
 `goals s [MODELNAME] attributeName:AttributeType! relationName:type:[ModelName]!`
-should create a suitable model, schema and resolve structures for your new type
+should create a suitable model, schema and resolver structures for your new type
 
 covering commun graphql types: String, Int, Boolean, ID, Float, and Time from graph-gophers/graphql-go every other type will be treated as Scalar if you don't specifically declare type before modelName
 
@@ -31,4 +31,5 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [ ] command runserver
 * [ ] command migrate
 * [ ] command s migration
+* [ ] goals core
 * [ ] hide package gqltype under goals core??
