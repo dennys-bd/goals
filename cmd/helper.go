@@ -47,8 +47,8 @@ func init() {
 }
 
 func check(err error) {
-	if msg != nil {
-		fmt.Println("Error:", msg)
+	if err != nil {
+		fmt.Println("Error:", err)
 		os.Exit(1)
 	}
 }
