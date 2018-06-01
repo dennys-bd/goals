@@ -72,6 +72,13 @@ func executeTemplate(tmplStr string, data interface{}) string {
 	return buf.String()
 }
 
+func replaceTemplate(tmplStr string, data map[string]string) string {
+	for k, v := range data {
+		tmplStr = strings.Replace(tmplStr, fmt.Sprintf("{{.%s}}", k), v, -1)
+	}
+	return tmplStr
+}
+
 func commentifyString(in string) string {
 	var newlines []string
 	lines := strings.Split(in, "\n")

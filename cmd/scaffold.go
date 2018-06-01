@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
 
@@ -13,7 +14,7 @@ import (
 
 var scaffoldCmd = &cobra.Command{
 	Use:     "scaffold [name] atribute:type!",
-	Aliases: []string{"scaf", "s"},
+	Aliases: []string{"scaf", "s", "Scaffold"},
 	Short:   "Creates attribute new object",
 	Long: `Scaffold (goals scaffold) will create attribute new object
 	and it's structure, nammed: Model. Schema and Resolvers.`,
@@ -25,34 +26,61 @@ var scaffoldCmd = &cobra.Command{
 
 		_, err = ioutil.ReadFile("lib/goalsfile")
 		if err != nil {
-			er("This is not attribute goals project")
+			er("This is not a goals project")
 		}
+
+		if len(args) < 2 {
+			er("Wrong arguments you should use a minimum of 2 arguments")
+		}
+
+		createFiles(args[0], args[1:])
 	},
 }
 
-func writeAtribute(name string, args []string) (model string, schema string, resolver string) {
+func createFiles(name string, args []string) {
+	model, schema, methods := getTemplates(args)
+	resolver := fmt.Sprintf("%s%sResolver", strings.ToLower(string(name[0])), name[1:])
+	abbreviation := toAbbreviation(name)
+	name = strings.Title(name)
+
+	data := map[string]string{"model": model, "schema": schema, "Name": name, "abbreviation": abbreviation, "resolver": resolver}
+
+	methods = replaceTemplate(methods, data)
+
+	data["methods"] = methods
+
+	modelScript := replaceTemplate(Templates["fullmodel"], data)
+	schemaScript := executeTemplate(Templates["fullschema"], data)
+	resolverScript := replaceTemplate(Templates["fullresolver"], data)
+
+	writeStringToFile(filepath.Join("app/model", fmt.Sprintf("%s.go", strings.ToLower(name))), modelScript)
+	writeStringToFile(filepath.Join("app/schema", fmt.Sprintf("%ssch.go", strings.ToLower(name))), schemaScript)
+	writeStringToFile(filepath.Join("app/resolver", fmt.Sprintf("%ss.go", strings.ToLower(name))), resolverScript)
+}
+
+func getTemplates(args []string) (model string, schema string, resolver string) {
 
 	var mB, sB, rB bytes.Buffer
 
 	for _, attribute := range args {
 		arguments := strings.Split(attribute, ":")
-		if len(arguments) > 1 && len(arguments) < 4 {
-			if arguments[1] == "type" && len(arguments) == 3 {
-				mB.WriteString(getModelLine(arguments[0], arguments[2], true))
-				sB.WriteString(getSchemaLine(arguments[0], arguments[2]))
-				rB.WriteString(getResolverLine(arguments[0], arguments[2], true))
+		if len(arguments) == 2 {
+			attr, tyName := arguments[0], arguments[1]
+			mB.WriteString(getModelLine(attr, tyName, false))
+			sB.WriteString(getSchemaLine(attr, tyName))
+			rB.WriteString(getResolverLine(attr, tyName, false))
 
-			} else {
-				mB.WriteString(getModelLine(arguments[0], arguments[1], false))
-				sB.WriteString(getSchemaLine(arguments[0], arguments[1]))
-				rB.WriteString(getResolverLine(arguments[0], arguments[1], false))
-			}
+		} else if len(arguments) == 3 && arguments[1] == "type" {
+			attr, tyName := arguments[0], arguments[2]
+			mB.WriteString(getModelLine(attr, tyName, true))
+			sB.WriteString(getSchemaLine(attr, tyName))
+			rB.WriteString(getResolverLine(attr, tyName, true))
 		} else {
-			er("Bad Syntax")
+			er(fmt.Sprintf("Bad Syntax in %s", attribute))
 		}
 	}
 
-	return model, schema, resolver
+	return mB.String(), sB.String(), rB.String()
 }
 
 func getModelLine(attribute string, typeName string, isModel bool) string {
@@ -109,11 +137,11 @@ func getModelLine(attribute string, typeName string, isModel bool) string {
 	}
 
 	if isModel {
-		return fmt.Sprintf("%s %s `json:\"-\"`\n", strings.Title(attribute), strings.Title(typeName))
+		return fmt.Sprintf("	%s %s `json:\"-\"`\n", strings.Title(attribute), strings.Title(typeName))
 	} else if typeName == "*bool" || typeName == "bool" {
-		return fmt.Sprintf("%s %s `json:\"%s\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
+		return fmt.Sprintf("	%s %s `json:\"%s\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
 	} else {
-		return fmt.Sprintf("%s %s `json:\"%s,omitempty\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
+		return fmt.Sprintf("	%s %s `json:\"%s,omitempty\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
 	}
 }
 
@@ -156,7 +184,7 @@ func getSchemaLine(attribute string, typeName string) string {
 		typeName += "!"
 	}
 
-	return fmt.Sprintf("%s: %s\n", attribute, typeName)
+	return fmt.Sprintf("	%s: %s\n", attribute, typeName)
 }
 
 func getResolverLine(attribute string, typeName string, isModel bool) string {
@@ -192,7 +220,7 @@ func getResolverLine(attribute string, typeName string, isModel bool) string {
 		case "time", "Time":
 			typeName = "time.Time"
 		default:
-			typeName = fmt.Sprintf("scalar.%s", typeName)
+			typeName = fmt.Sprintf("scalar.%s", strings.Title(typeName))
 		}
 
 		if isList {
@@ -208,25 +236,25 @@ func getResolverLine(attribute string, typeName string, isModel bool) string {
 		}
 
 		return fmt.Sprintf(`func (r *{{.resolver}}) %s() %s {
-    return r.{{.abbreviation}}.%s
-	}
+	return r.{{.abbreviation}}.%s
+}
 `, strings.Title(attribute), typeName, strings.Title(attribute))
 	}
 
-	typeName = fmt.Sprintf("*%sResolver", strings.Title(typeName))
+	typeName = fmt.Sprintf("%s%sResolver", strings.ToLower(string(typeName[0])), typeName[1:])
 
 	if isList {
 		pointer := "*"
 		address := "&"
 		insideAddress := ""
 		check := `if r.{{.abbreviation}}.{{.attribute}} == nil {
-return nil
-}`
-		bal := `func (r *{{.resolver}}) {{.attribute}}() {{.pointer}}[]{{.typeName}} {
-	{{.check}}
-	slice := {{.pointer}}r.{{.abbreviation}}.{{.attribute}}
+		return nil
+	}
+	`
+		bal := `func (r *{{.resolver}}) {{.attribute}}() {{.pointer}}[]*{{.typeName}} {
+	{{.check}}slice := {{.pointer}}r.{{.abbreviation}}.{{.attribute}}
 
-	l := make([]{{.typeName}}, len(slice))
+	l := make([]*{{.typeName}}, len(slice))
 	for i := range l {
 		l[i] = &{{.typeName}}{{{.insideAddress}}slice[i]}
 	}
@@ -244,22 +272,26 @@ return nil
 			insideAddress = "&"
 		}
 
-		strings.Replace(bal, "{{.check}}", check, -1)
-		strings.Replace(bal, "{{.insideAddress}}", insideAddress, -1)
-		strings.Replace(bal, "{{.attribute}}", attribute, -1)
-		strings.Replace(bal, "{{.typeName}}", typeName, -1)
-		strings.Replace(bal, "{{.pointer}}", pointer, -1)
-		strings.Replace(bal, "{{.address}}", address, -1)
+		bal = strings.Replace(bal, "{{.check}}", check, -1)
+		bal = strings.Replace(bal, "{{.insideAddress}}", insideAddress, -1)
+		bal = strings.Replace(bal, "{{.attribute}}", strings.Title(attribute), -1)
+		bal = strings.Replace(bal, "{{.typeName}}", typeName, -1)
+		bal = strings.Replace(bal, "{{.pointer}}", pointer, -1)
+		bal = strings.Replace(bal, "{{.address}}", address, -1)
+
+		return bal
 
 	}
 
-	if isModel {
-		return fmt.Sprintf("%s %s `json:\"-\"`\n", strings.Title(attribute), typeName)
-	} else if typeName == "*bool" || typeName == "bool" {
-		return fmt.Sprintf("%s %s `json:\"%s\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
-	} else {
-		return fmt.Sprintf("%s %s `json:\"%s,omitempty\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
+	address := ""
+	if isMandatory {
+		address = "&"
 	}
+
+	return fmt.Sprintf(`func (r *{{.resolver}}) %s() *%s {
+	return &%s{%sr.{{.abbreviation}}.%s}
+}
+`, strings.Title(attribute), typeName, typeName, address, strings.Title(attribute))
 }
 
 func toSnake(in string) string {
@@ -272,6 +304,21 @@ func toSnake(in string) string {
 			out = append(out, '_')
 		}
 		out = append(out, unicode.ToLower(runes[i]))
+	}
+
+	return string(out)
+}
+
+func toAbbreviation(in string) string {
+	runes := []rune(in)
+	length := len(runes)
+
+	var out []rune
+	out = append(out, unicode.ToLower(runes[0]))
+	for i := 0; i < length; i++ {
+		if i > 0 && unicode.IsUpper(runes[i]) && ((i+1 < length && unicode.IsLower(runes[i+1])) || unicode.IsLower(runes[i-1])) {
+			out = append(out, unicode.ToLower(runes[i]))
+		}
 	}
 
 	return string(out)

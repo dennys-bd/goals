@@ -11,4 +11,7 @@ func init() {
 	initConfig()
 	initGit()
 	initGql()
+	initModel()
+	initSchema()
+	initResolver()
 }
