@@ -1,8 +1,9 @@
 package test
 
 import (
-	"goals/cmd"
 	"testing"
+
+	"github.com/dennys-bd/goals/cmd"
 )
 
 type ScaffoldTest struct {

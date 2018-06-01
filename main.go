@@ -1,6 +1,6 @@
 package main
 
-import "goals/cmd"
+import "github.com/dennys-bd/goals/cmd"
 
 func main() {
 	cmd.Execute()
