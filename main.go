@@ -1,8 +1,6 @@
 package main
 
-import (
-	"goals/cmd"
-)
+import "goals/cmd"
 
 func main() {
 	cmd.Execute()
