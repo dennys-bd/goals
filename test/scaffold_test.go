@@ -1,4 +1,4 @@
-package cmd
+package test
 
 import "testing"
 
@@ -61,43 +61,43 @@ func TestGetModelLine(t *testing.T) {
 var resolverTest = []ScaffoldTest{
 	{"attrCool", "string", false, `func (r *{{.resolver}}) AttrCool() *string {
 	return r.{{.abbreviation}}.AttrCool
-	}
+}
 `},
 	{"attrCool", "bool!", false, `func (r *{{.resolver}}) AttrCool() bool {
 	return r.{{.abbreviation}}.AttrCool
-	}
+}
 `},
 	{"attrCool", "Boolean!", false, `func (r *{{.resolver}}) AttrCool() bool {
 	return r.{{.abbreviation}}.AttrCool
-	}
+}
 `},
 	{"attrCool", "[id!]", false, `func (r *{{.resolver}}) AttrCool() *[]graphql.ID {
 	return r.{{.abbreviation}}.AttrCool
-	}
+}
 `},
 	{"attrCool", "[json]!", false, `func (r *{{.resolver}}) AttrCool() []*scalar.Json {
 	return r.{{.abbreviation}}.AttrCool
-	}
+}
 `},
 	{"attrCool", "[time]", false, `func (r *{{.resolver}}) AttrCool() *[]*time.Time {
 	return r.{{.abbreviation}}.AttrCool
-	}
+}
 `},
 	{"attrCool", "[int!]!", false, `func (r *{{.resolver}}) AttrCool() []int32 {
 	return r.{{.abbreviation}}.AttrCool
-	}
+}
 `},
 	{"attrCool", "[float!]!", false, `func (r *{{.resolver}}) AttrCool() []float64 {
 	return r.{{.abbreviation}}.AttrCool
-	}
+}
 `},
 	{"userCool", "myUser!", true, `func (r *{{.resolver}}) UserCool() *myUserResolver {
 	return &myUserResolver{&r.{{.abbreviation}}.UserCool}
-	}
+}
 `},
 	{"userCool", "MyUser", true, `func (r *{{.resolver}}) UserCool() *myUserResolver {
 	return &myUserResolver{r.{{.abbreviation}}.UserCool}
-	}
+}
 `},
 	{"userCool", "[myUser!]", true, `func (r *{{.resolver}}) UserCool() *[]*myUserResolver {
 	if r.{{.abbreviation}}.UserCool == nil {

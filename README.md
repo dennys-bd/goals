@@ -16,10 +16,12 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 
 * [x] command init
 * [x] command scaffold
-* [ ] Brew installation
 * [ ] Write goalsfile
 * [ ] retrieving project from goalsfile
 * [ ] more directory options in goals init
+* [ ] test goals init
+* [ ] remove templates from scaffold
+* [ ] create templates package?
 * [ ] Create integration with gorm
 * [ ] Flag to resolver name on scaffold model
 * [ ] Flag to separate application in database directive ou gateway in init
@@ -33,3 +35,4 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [ ] command s migration
 * [ ] goals core
 * [ ] hide package gqltype under goals core??
+* [ ] Brew installation

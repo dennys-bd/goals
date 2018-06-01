@@ -66,15 +66,15 @@ func getTemplates(args []string) (model string, schema string, resolver string) 
 		arguments := strings.Split(attribute, ":")
 		if len(arguments) == 2 {
 			attr, tyName := arguments[0], arguments[1]
-			mB.WriteString(getModelLine(attr, tyName, false))
-			sB.WriteString(getSchemaLine(attr, tyName))
-			rB.WriteString(getResolverLine(attr, tyName, false))
+			mB.WriteString(GetModelLine(attr, tyName, false))
+			sB.WriteString(GetSchemaLine(attr, tyName))
+			rB.WriteString(GetResolverLine(attr, tyName, false))
 
 		} else if len(arguments) == 3 && arguments[1] == "type" {
 			attr, tyName := arguments[0], arguments[2]
-			mB.WriteString(getModelLine(attr, tyName, true))
-			sB.WriteString(getSchemaLine(attr, tyName))
-			rB.WriteString(getResolverLine(attr, tyName, true))
+			mB.WriteString(GetModelLine(attr, tyName, true))
+			sB.WriteString(GetSchemaLine(attr, tyName))
+			rB.WriteString(GetResolverLine(attr, tyName, true))
 		} else {
 			er(fmt.Sprintf("Bad Syntax in %s", attribute))
 		}
@@ -83,7 +83,9 @@ func getTemplates(args []string) (model string, schema string, resolver string) 
 	return mB.String(), sB.String(), rB.String()
 }
 
-func getModelLine(attribute string, typeName string, isModel bool) string {
+// GetModelLine returns a line for model struct based on
+// arguments comming from goals scaffold
+func GetModelLine(attribute string, typeName string, isModel bool) string {
 	var isMandatoryInList bool
 	isMandatory := strings.HasSuffix(typeName, "!")
 	isList := strings.HasPrefix(typeName, "[")
@@ -145,7 +147,9 @@ func getModelLine(attribute string, typeName string, isModel bool) string {
 	}
 }
 
-func getSchemaLine(attribute string, typeName string) string {
+// GetSchemaLine returns a line for model schema based on
+// arguments comming from goals scaffold
+func GetSchemaLine(attribute string, typeName string) string {
 	var isMandatoryInList bool
 	isMandatory := strings.HasSuffix(typeName, "!")
 	isList := strings.HasPrefix(typeName, "[")
@@ -187,7 +191,9 @@ func getSchemaLine(attribute string, typeName string) string {
 	return fmt.Sprintf("	%s: %s\n", attribute, typeName)
 }
 
-func getResolverLine(attribute string, typeName string, isModel bool) string {
+// GetResolverLine returns a line for model resolver based on
+// arguments comming from goals scaffold
+func GetResolverLine(attribute string, typeName string, isModel bool) string {
 	var isMandatoryInList bool
 	isMandatory := strings.HasSuffix(typeName, "!")
 	isList := strings.HasPrefix(typeName, "[")
