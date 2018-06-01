@@ -1,6 +1,9 @@
 package test
 
-import "testing"
+import (
+	"goals/cmd"
+	"testing"
+)
 
 type ScaffoldTest struct {
 	attribute string
@@ -28,7 +31,7 @@ var schemaTest = []ScaffoldTest{
 
 func TestGetSchemaLine(t *testing.T) {
 	for _, test := range schemaTest {
-		if result := getSchemaLine(test.attribute, test.typeName); result != test.output {
+		if result := cmd.GetSchemaLine(test.attribute, test.typeName); result != test.output {
 			t.Errorf(`getSchemaLine("%s", "%s"), wanted "%s", got "%s"`, test.attribute, test.typeName, test.output, result)
 		}
 	}
@@ -52,7 +55,7 @@ var modelTest = []ScaffoldTest{
 
 func TestGetModelLine(t *testing.T) {
 	for _, test := range modelTest {
-		if result := getModelLine(test.attribute, test.typeName, test.isModel); result != test.output {
+		if result := cmd.GetModelLine(test.attribute, test.typeName, test.isModel); result != test.output {
 			t.Errorf(`getSchemaLine("%s", "%s"), wanted "%s", got "%s"`, test.attribute, test.typeName, test.output, result)
 		}
 	}
@@ -141,7 +144,7 @@ var resolverTest = []ScaffoldTest{
 
 func TestGetResolverLine(t *testing.T) {
 	for _, test := range resolverTest {
-		if result := getResolverLine(test.attribute, test.typeName, test.isModel); result != test.output {
+		if result := cmd.GetResolverLine(test.attribute, test.typeName, test.isModel); result != test.output {
 			t.Errorf(`getResolver("%s", "%s", "%t"), wanted "%s", got "%s"`, test.attribute, test.typeName, test.isModel, test.output, result)
 		}
 	}
