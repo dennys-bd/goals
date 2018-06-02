@@ -1,17 +1,27 @@
 package cmd
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/BurntSushi/toml"
 )
+
+type goalsToml struct {
+	Project Project
+}
 
 // Project model
 type Project struct {
-	absPath string
-	srcPath string
-	name    string
+	AbsPath    string `toml:"abs_path"`
+	ImportPath string `toml:"import_path"`
+	Name       string
+	GoVersion  string `toml:"go_version"`
+	AppMode    string `toml:"app_mode"`
 }
 
 // NewProject returns Project with specified project name.
@@ -21,40 +31,43 @@ func NewProject(projectName string) *Project {
 	}
 
 	p := new(Project)
-	p.name = projectName
+
+	p.GoVersion = getGoVersion()
+	p.AppMode = "gateway"
 
 	// 1. Find already created protect.
-	p.absPath = findPackage(projectName)
+	p.AbsPath = findPackage(projectName)
 
-	// 2. If there are no created project with this path, and user is in GOPATH,
-	// then use GOPATH/src/projectName.
-	if p.absPath == "" {
+	// 2. If there are no created project with this path, and user is in GOPATH/src,
+	// then use working directory.
+	if p.AbsPath == "" {
 		wd, err := os.Getwd()
 		check(err)
 
 		for _, srcPath := range srcPaths {
 			goPath := filepath.Dir(srcPath)
 			if filepathHasPrefix(wd, goPath) {
-				p.absPath = filepath.Join(srcPath, projectName)
+				p.AbsPath = filepath.Join(wd, projectName)
 				break
 			}
 		}
 	}
 
 	// 3. If user is not in GOPATH, then use (first GOPATH)/src/projectName.
-	if p.absPath == "" {
-		p.absPath = filepath.Join(srcPaths[0], projectName)
+	if p.AbsPath == "" {
+		p.AbsPath = filepath.Join(srcPaths[0], projectName)
 	}
+
+	p.Name = filepath.Base(p.AbsPath)
+
+	goPath := os.Getenv("GOPATH") + "/src/"
+	p.ImportPath = strings.TrimPrefix(p.AbsPath, goPath)
 
 	return p
 }
 
 // findPackage returns full path to existing go package in GOPATHs.
 func findPackage(packageName string) string {
-	if packageName == "" {
-		return ""
-	}
-
 	for _, srcPath := range srcPaths {
 		packagePath := filepath.Join(srcPath, packageName)
 		if exists(packagePath) {
@@ -77,51 +90,82 @@ func filepathHasPrefix(path string, prefix string) bool {
 
 }
 
-func (p Project) Name() string {
-	return p.name
+// RecreateProjectFromGoals return the project configs from Goals.toml
+func RecreateProjectFromGoals(path string) Project {
+	if !filepath.IsAbs(path) {
+		er(fmt.Sprintf("%v is not an absolute path", path))
+	}
+	data, err := ioutil.ReadFile(filepath.Join(path, "lib/Goals.toml"))
+	if err != nil {
+		er("This is not a goals project")
+	}
+
+	var m goalsToml
+	check(err)
+	_, err = toml.Decode(string(data), &m)
+	check(err)
+
+	m.Project.AbsPath = path
+
+	return m.Project
 }
-func (p Project) AbsPath() string {
-	return p.absPath
+
+// CreateGoalsToml create the file Goals.Toml
+// in which we save some of the project attributes
+func (p Project) CreateGoalsToml() {
+	template := fmt.Sprintf(`[project]
+	name = "%s"
+	go_version = "%s"
+	app_mode = "%s"
+	import_path = "%s"`, p.Name, p.GoVersion, p.AppMode, p.ImportPath)
+
+	writeStringToFile(filepath.Join(p.LibPath(), "Goals.toml"), template)
 }
+
+//GqlPath is the path to package gqltype
 func (p Project) GqlPath() string {
-	if p.absPath == "" {
+	if p.AbsPath == "" {
 		return ""
 	}
-	return filepath.Join(p.absPath, "app/gqltype")
+	return filepath.Join(p.AbsPath, "app/gqltype")
 }
+
+//ResolverPath is the path to package resolver
 func (p Project) ResolverPath() string {
-	if p.absPath == "" {
+	if p.AbsPath == "" {
 		return ""
 	}
-	return filepath.Join(p.absPath, "app/resolver")
+	return filepath.Join(p.AbsPath, "app/resolver")
 }
+
+//ScalarPath is the path to package scalar
 func (p Project) ScalarPath() string {
-	if p.absPath == "" {
+	if p.AbsPath == "" {
 		return ""
 	}
-	return filepath.Join(p.absPath, "app/scalar")
+	return filepath.Join(p.AbsPath, "app/scalar")
 }
+
+//ModelPath is the path to package model
 func (p Project) ModelPath() string {
-	if p.absPath == "" {
+	if p.AbsPath == "" {
 		return ""
 	}
-	return filepath.Join(p.absPath, "app/model")
+	return filepath.Join(p.AbsPath, "app/model")
 }
+
+//SchemaPath is the path to package schema
 func (p Project) SchemaPath() string {
-	if p.absPath == "" {
+	if p.AbsPath == "" {
 		return ""
 	}
-	return filepath.Join(p.absPath, "app/schema")
+	return filepath.Join(p.AbsPath, "app/schema")
 }
-func (p Project) ImportPath() string {
-	if p.absPath == "" {
-		return ""
-	}
-	return filepath.Base(p.absPath)
-}
+
+//LibPath is the path to package lib
 func (p Project) LibPath() string {
-	if p.absPath == "" {
+	if p.AbsPath == "" {
 		return ""
 	}
-	return filepath.Join(p.absPath, "lib")
+	return filepath.Join(p.AbsPath, "lib")
 }

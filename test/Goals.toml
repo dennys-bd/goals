@@ -1,0 +1,6 @@
+[project]
+    name = "goals"
+    absPath = "blabla"
+    srcPath = "blabla"
+    goVersion = 1.8
+    appMode = "gateway"

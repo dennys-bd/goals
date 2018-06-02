@@ -25,4 +25,4 @@
 vendor/*/**
 
 # Testing porpouses
-lib/goalsfile
+lib/Goals.toml

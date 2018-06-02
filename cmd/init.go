@@ -10,11 +10,20 @@ import (
 )
 
 var initCmd = &cobra.Command{
-	Use:     "init [name]",
+	Use:     "init name",
 	Aliases: []string{"initialize", "create"},
 	Short:   "Initialize a Goals Application",
 	Long: `Initialize (goals init) will create a new application, with 
-the appropriate structure for a Go-Graphql application.`,
+the appropriate structure for a Go-Graphql application.
+
+* If a name or relative path is provided, it will be created inside $GOPATH;
+  (e.g. github.com/dennys-bd/goals);
+* If an absolute path is provided, it will be created INSIDE $GOPATH;
+* If your working directory is inside $GOPATH, it will be created on the wd;
+* If the directory already exists but is empty, it will be used.
+
+Init will not use an existing directory with contents.`,
+
 	Run: func(cmd *cobra.Command, args []string) {
 		_, err := os.Getwd()
 		check(err)
@@ -47,11 +56,11 @@ the appropriate structure for a Go-Graphql application.`,
 }
 
 func intializeProject(project *Project) {
-	if !exists(project.AbsPath()) {
-		err := os.MkdirAll(project.AbsPath(), os.ModePerm)
+	if !exists(project.AbsPath) {
+		err := os.MkdirAll(project.AbsPath, os.ModePerm)
 		check(err)
-	} else if !isEmpty(project.AbsPath()) {
-		er("Goals will not create a new project in a non empty directory: " + project.AbsPath())
+	} else if !isEmpty(project.AbsPath) {
+		er("Goals will not create a new project in a non empty directory: " + project.AbsPath)
 	}
 
 	initializeDep(project)
@@ -66,7 +75,7 @@ func intializeProject(project *Project) {
 }
 
 func initializeDep(project *Project) {
-	cmd := exec.Command("dep", "init", project.AbsPath())
+	cmd := exec.Command("dep", "init", project.AbsPath)
 	err := cmd.Run()
 	check(err)
 
@@ -109,23 +118,24 @@ type Resolver struct{}
 }
 
 func createAbsFiles(project *Project) {
-	serverData := map[string]interface{}{"importpath": project.ImportPath()}
+	serverData := map[string]interface{}{"importpath": project.ImportPath}
 	serverScript := executeTemplate(Templates["server"], serverData)
 
 	procTemplate := `web: {{.appname}}`
-	procData := map[string]interface{}{"appname": project.Name()}
+	procData := map[string]interface{}{"appname": project.Name}
 	procScript := executeTemplate(procTemplate, procData)
 
-	writeStringToFile(filepath.Join(project.AbsPath(), "server.go"), serverScript)
-	writeStringToFile(filepath.Join(project.AbsPath(), ".gitignore"), Templates["git"])
-	writeStringToFile(filepath.Join(project.AbsPath(), "Procfile"), procScript)
+	writeStringToFile(filepath.Join(project.AbsPath, "server.go"), serverScript)
+	writeStringToFile(filepath.Join(project.AbsPath, ".gitignore"), Templates["git"])
+	writeStringToFile(filepath.Join(project.AbsPath, "Procfile"), procScript)
 	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), Templates["config"])
+	project.CreateGoalsToml()
 	// TODO: Create consts.go
 }
 
 func downloadDepedences(project *Project) {
 	cmd := exec.Command("dep", "ensure")
-	cmd.Dir = project.AbsPath()
+	cmd.Dir = project.AbsPath
 	err := cmd.Run()
 	check(err)
 }

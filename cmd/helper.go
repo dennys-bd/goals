@@ -24,15 +24,14 @@ func init() {
 		// Note, checking the GOPATH first to avoid invoking the go toolchain if
 		// possible.
 
-		goExecutable := os.Getenv("COBRA_GO_EXECUTABLE")
-		if len(goExecutable) <= 0 {
-			goExecutable = "go"
-		}
+		// goExecutable := os.Getenv("COBRA_GO_EXECUTABLE")
+		// if len(goExecutable) <= 0 {
+		// 	goExecutable = "go"
+		// }
+		goExecutable := "go"
 
 		out, err := exec.Command(goExecutable, "env", "GOPATH").Output()
-		if err != nil {
-			er(err)
-		}
+		check(err)
 
 		toolchainGoPath := strings.TrimSpace(string(out))
 		goPaths = filepath.SplitList(toolchainGoPath)
@@ -137,6 +136,13 @@ func exists(path string) bool {
 		er(err)
 	}
 	return false
+}
+
+func getGoVersion() string {
+	v, err := exec.Command("go", "version").Output()
+	check(err)
+	vl := strings.Split(string(v), " ")
+	return vl[2]
 }
 
 // isEmpty checks if a given path is empty.

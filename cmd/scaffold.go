@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,25 +18,21 @@ var scaffoldCmd = &cobra.Command{
 	Long: `Scaffold (goals scaffold) will create attribute new object
 	and it's structure, nammed: Model. Schema and Resolvers.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		_, err := os.Getwd()
+		if len(args) < 2 {
+			er("Wrong arguments you should use a minimum of 2 arguments")
+		}
+		wd, err := os.Getwd()
 		if err != nil {
 			er(err)
 		}
 
-		_, err = ioutil.ReadFile("lib/goalsfile")
-		if err != nil {
-			er("This is not a goals project")
-		}
+		project := RecreateProjectFromGoals(wd)
 
-		if len(args) < 2 {
-			er("Wrong arguments you should use a minimum of 2 arguments")
-		}
-
-		createFiles(args[0], args[1:])
+		createFiles(args[0], args[1:], project)
 	},
 }
 
-func createFiles(name string, args []string) {
+func createFiles(name string, args []string, project Project) {
 	model, schema, methods := getTemplates(args)
 	resolver := fmt.Sprintf("%s%sResolver", strings.ToLower(string(name[0])), name[1:])
 	abbreviation := toAbbreviation(name)
