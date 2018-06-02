@@ -25,10 +25,9 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] more directory options in goals init
 * [x] fix import model on resolver
 * [x] uppercase if the attribute name is id (model, resolver)
-* [ ] relations should always be pointer
-* [ ] import graphql and scalar in model and resolver if needed
+* [x] import graphql and scalar in model and resolver if needed
 * [ ] test goals init
-* [ ] remove templates from scaffold
+* [ ] remove templates from scaffold.go
 * [ ] create templates package?
 * [ ] create integration with gorm
 * [ ] replace goals command text
@@ -43,5 +42,6 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [ ] command migrate
 * [ ] command s migration
 * [ ] goals core
+* [ ] relations should always be pointer?
 * [ ] hide package gqltype under goals core??
 * [ ] Brew installation

@@ -33,23 +33,83 @@ var scaffoldCmd = &cobra.Command{
 }
 
 func createFiles(name string, args []string, project Project) {
-	model, schema, methods := getTemplates(args)
-	resolver := fmt.Sprintf("%s%sResolver", strings.ToLower(string(name[0])), name[1:])
-	abbreviation := toAbbreviation(name)
+	model, schema, resolver := getTemplates(args)
 	name = strings.Title(name)
+	writeModel(name, model, project)
+	writeSchema(name, schema, project)
+	writeResolver(name, resolver, project)
 
-	data := map[string]string{"model": model, "schema": schema, "Name": name, "abbreviation": abbreviation, "resolver": resolver, "importpath": project.ImportPath}
+}
 
-	methods = replaceTemplate(methods, data)
+func writeModel(name string, template string, project Project) {
+	hasGraphql := strings.Index(template, "graphql.ID") > -1
+	hasScalar := strings.Index(template, "scalar.") > -1
+	hasTime := strings.Index(template, "time.Time") > -1
 
-	data["methods"] = methods
+	importpath := ""
+	if hasTime {
+		importpath = "	\"time\"\n\n"
+	}
+	if hasScalar {
+		importpath += fmt.Sprintf("	\"%v/app/scalar\"\n", project.ImportPath)
+	}
+	if hasGraphql {
+		importpath += "	graphql \"github.com/graph-gophers/graphql-go\"\n"
+	}
+
+	if (hasTime && hasScalar) || (hasTime && hasGraphql) || (hasScalar && hasGraphql) {
+		importpath = fmt.Sprintf("import (\n%v)\n\n", importpath)
+	} else {
+		importpath = "import " + importpath + "\n"
+	}
+
+	data := map[string]string{"model": template, "Name": name, "importpath": importpath}
 
 	modelScript := replaceTemplate(Templates["fullmodel"], data)
-	schemaScript := executeTemplate(Templates["fullschema"], data)
-	resolverScript := replaceTemplate(Templates["fullresolver"], data)
 
 	writeStringToFile(filepath.Join("app/model", fmt.Sprintf("%s.go", strings.ToLower(name))), modelScript)
+}
+
+func writeSchema(name string, template string, project Project) {
+	data := map[string]string{"schema": template, "Name": name}
+	schemaScript := executeTemplate(Templates["fullschema"], data)
 	writeStringToFile(filepath.Join("app/schema", fmt.Sprintf("%ssch.go", strings.ToLower(name))), schemaScript)
+}
+
+func writeResolver(name string, template string, project Project) {
+	resolver := fmt.Sprintf("%s%sResolver", strings.ToLower(string(name[0])), name[1:])
+	abbreviation := toAbbreviation(name)
+
+	hasGraphql := strings.Index(template, "graphql.ID") > -1
+	hasScalar := strings.Index(template, "scalar.") > -1
+	hasTime := strings.Index(template, "time.Time") > -1
+
+	importpath := ""
+	if hasTime {
+		importpath = "	\"time\"\n\n"
+	}
+	importpath = fmt.Sprintf("%s	\"%s/app/model\"\n", importpath, project.ImportPath)
+	if hasScalar {
+		importpath += fmt.Sprintf("	\"%v/app/scalar\"\n", project.ImportPath)
+	}
+	if hasGraphql {
+		importpath += "	graphql \"github.com/graph-gophers/graphql-go\"\n"
+	}
+
+	if hasTime || hasScalar || hasGraphql {
+		importpath = fmt.Sprintf("import (\n%v)\n\n", importpath)
+	} else {
+		importpath = "import " + importpath + "\n"
+	}
+
+	data := map[string]string{"Name": name, "abbreviation": abbreviation, "resolver": resolver, "importpath": importpath}
+
+	template = replaceTemplate(template, data)
+
+	data["methods"] = template
+
+	resolverScript := replaceTemplate(Templates["fullresolver"], data)
+
 	writeStringToFile(filepath.Join("app/resolver", fmt.Sprintf("%ss.go", strings.ToLower(name))), resolverScript)
 }
 
