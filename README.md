@@ -24,7 +24,8 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] name fix on create project
 * [x] more directory options in goals init
 * [x] fix import model on resolver
-* [ ] uppercase if the attribute name is id (model, resolver)
+* [x] uppercase if the attribute name is id (model, resolver)
+* [ ] relations should always be pointer
 * [ ] import graphql and scalar in model and resolver if needed
 * [ ] test goals init
 * [ ] remove templates from scaffold

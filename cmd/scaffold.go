@@ -81,6 +81,9 @@ func getTemplates(args []string) (model string, schema string, resolver string) 
 // GetModelLine returns a line for model struct based on
 // arguments comming from goals scaffold
 func GetModelLine(attribute string, typeName string, isModel bool) string {
+	if strings.EqualFold(attribute, "id") {
+		attribute = strings.ToUpper(attribute)
+	}
 	var isMandatoryInList bool
 	isMandatory := strings.HasSuffix(typeName, "!")
 	isList := strings.HasPrefix(typeName, "[")
@@ -189,6 +192,9 @@ func GetSchemaLine(attribute string, typeName string) string {
 // GetResolverLine returns a line for model resolver based on
 // arguments comming from goals scaffold
 func GetResolverLine(attribute string, typeName string, isModel bool) string {
+	if strings.EqualFold(attribute, "id") {
+		attribute = strings.ToUpper(attribute)
+	}
 	var isMandatoryInList bool
 	isMandatory := strings.HasSuffix(typeName, "!")
 	isList := strings.HasPrefix(typeName, "[")
