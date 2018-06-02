@@ -38,7 +38,7 @@ func createFiles(name string, args []string, project Project) {
 	abbreviation := toAbbreviation(name)
 	name = strings.Title(name)
 
-	data := map[string]string{"model": model, "schema": schema, "Name": name, "abbreviation": abbreviation, "resolver": resolver}
+	data := map[string]string{"model": model, "schema": schema, "Name": name, "abbreviation": abbreviation, "resolver": resolver, "importpath": project.ImportPath}
 
 	methods = replaceTemplate(methods, data)
 

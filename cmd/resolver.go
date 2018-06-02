@@ -3,7 +3,7 @@ package cmd
 func initResolver() {
 	Templates["fullresolver"] = `package resolver
 
-import "app/model"
+import "{{.importpath}}/app/model"
 
 type {{.resolver}} struct {
 	{{.abbreviation}} *model.{{.Name}}

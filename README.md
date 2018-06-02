@@ -7,7 +7,7 @@
 ## usage
 `goals` has 2 commands today
 
-`goals init [PROJECTNAME]` should start your project unde your $GOPATH
+`goals init [PROJECTNAME]` should start your project under your $GOPATH/src
 
 `goals s [MODELNAME] attributeName:AttributeType! relationName:type:[ModelName]!`
 should create a suitable model, schema and resolver structures for your new type
@@ -23,17 +23,17 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] retrieving project from goalsfile
 * [x] name fix on create project
 * [x] more directory options in goals init
-* [ ] fix import model on resolver
-* [ ] uppercase if attribute name is id (model, resolver)
+* [x] fix import model on resolver
+* [ ] uppercase if the attribute name is id (model, resolver)
 * [ ] import graphql and scalar in model and resolver if needed
 * [ ] test goals init
 * [ ] remove templates from scaffold
 * [ ] create templates package?
 * [ ] create integration with gorm
 * [ ] replace goals command text
-* [ ] Flag to resolver name on scaffold model
-* [ ] Flag to separate application in database directive ou gateway in init
-* [ ] Flag to separate model in databased ou delivered from external api in scaffold
+* [ ] flag to resolver name on scaffold model
+* [ ] flag to separate application in database directive ou gateway in init
+* [ ] flag to separate model in databased ou delivered from external api in scaffold
 * [ ] authentication
 * [ ] lib/schema should contains: Model Name, Resolver name, Type of retrival
 * [ ] dotEnv
