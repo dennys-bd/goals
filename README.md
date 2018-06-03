@@ -26,11 +26,12 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] fix import model on resolver
 * [x] uppercase if the attribute name is id (model, resolver)
 * [x] import graphql and scalar in model and resolver if needed
-* [ ] test goals init
-* [ ] remove templates from scaffold.go
 * [x] create templates package
-* [ ] create integration with gorm
+* [ ] unit test for goals init.go
+* [ ] unit test for project.go
+* [ ] check unit test for scaffold.go
 * [ ] replace goals command text
+* [ ] create integration with gorm
 * [ ] flag to resolver name on scaffold model
 * [ ] flag to separate application in database directive ou gateway in init
 * [ ] flag to separate model in databased ou delivered from external api in scaffold
