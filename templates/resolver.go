@@ -1,4 +1,4 @@
-package cmd
+package templates
 
 func initResolver() {
 	Templates["fullresolver"] = `package resolver

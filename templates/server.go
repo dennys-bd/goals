@@ -1,4 +1,4 @@
-package cmd
+package templates
 
 func initServer() {
 	Templates["server"] = `package main

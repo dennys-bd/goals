@@ -1,4 +1,4 @@
-package cmd
+package templates
 
 func initConfig() {
 	Templates["config"] = `package lib

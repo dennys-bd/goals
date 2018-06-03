@@ -1,4 +1,4 @@
-package cmd
+package templates
 
 // Templates has all the templates to create Files
 var Templates = make(map[string]string)

@@ -1,4 +1,4 @@
-package cmd
+package templates
 
 func initSchema() {
 	Templates["fullschema"] = `package schema

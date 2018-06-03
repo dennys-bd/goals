@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/dennys-bd/goals/templates"
 	"github.com/spf13/cobra"
 )
 
@@ -65,14 +66,14 @@ func writeModel(name string, template string, project Project) {
 
 	data := map[string]string{"model": template, "Name": name, "importpath": importpath}
 
-	modelScript := replaceTemplate(Templates["fullmodel"], data)
+	modelScript := replaceTemplate(templates.Templates["fullmodel"], data)
 
 	writeStringToFile(filepath.Join("app/model", fmt.Sprintf("%s.go", strings.ToLower(name))), modelScript)
 }
 
 func writeSchema(name string, template string, project Project) {
 	data := map[string]string{"schema": template, "Name": name}
-	schemaScript := executeTemplate(Templates["fullschema"], data)
+	schemaScript := executeTemplate(templates.Templates["fullschema"], data)
 	writeStringToFile(filepath.Join("app/schema", fmt.Sprintf("%ssch.go", strings.ToLower(name))), schemaScript)
 }
 
@@ -108,7 +109,7 @@ func writeResolver(name string, template string, project Project) {
 
 	data["methods"] = template
 
-	resolverScript := replaceTemplate(Templates["fullresolver"], data)
+	resolverScript := replaceTemplate(templates.Templates["fullresolver"], data)
 
 	writeStringToFile(filepath.Join("app/resolver", fmt.Sprintf("%ss.go", strings.ToLower(name))), resolverScript)
 }

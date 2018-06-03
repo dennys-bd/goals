@@ -1,4 +1,4 @@
-package cmd
+package templates
 
 func initGit() {
 	Templates["git"] = `### Go ###

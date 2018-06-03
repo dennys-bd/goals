@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/dennys-bd/goals/templates"
 	"github.com/spf13/cobra"
 )
 
@@ -86,16 +87,16 @@ func createGQLTypes(project *Project) {
 	mutationData := map[string]interface{}{"Gqltypes": "Mutations", "Gqltype": "Mutation", "gqltypes": "mutations"}
 	subscriptionData := map[string]interface{}{"Gqltypes": "Subscriptions", "Gqltype": "Subscription", "gqltypes": "subscriptions"}
 
-	queryScript := executeTemplate(Templates["gqltypes"], queryData)
-	mutationScript := executeTemplate(Templates["gqltypes"], mutationData)
-	subscriptionScript := executeTemplate(Templates["gqltypes"], subscriptionData)
+	queryScript := executeTemplate(templates.Templates["gqltypes"], queryData)
+	mutationScript := executeTemplate(templates.Templates["gqltypes"], mutationData)
+	subscriptionScript := executeTemplate(templates.Templates["gqltypes"], subscriptionData)
 
 	writeStringToFile(filepath.Join(project.GqlPath(), "queries.go"), queryScript)
 	writeStringToFile(filepath.Join(project.GqlPath(), "mutations.go"), mutationScript)
 	writeStringToFile(filepath.Join(project.GqlPath(), "subscriptions.go"), subscriptionScript)
-	writeStringToFile(filepath.Join(project.GqlPath(), "scalars.go"), Templates["scalar"])
-	writeStringToFile(filepath.Join(project.GqlPath(), "schema.go"), Templates["schema"])
-	writeStringToFile(filepath.Join(project.GqlPath(), "types.go"), Templates["types"])
+	writeStringToFile(filepath.Join(project.GqlPath(), "scalars.go"), templates.Templates["scalar"])
+	writeStringToFile(filepath.Join(project.GqlPath(), "schema.go"), templates.Templates["schema"])
+	writeStringToFile(filepath.Join(project.GqlPath(), "types.go"), templates.Templates["types"])
 }
 
 func createStructure(project *Project) {
@@ -105,9 +106,9 @@ func createStructure(project *Project) {
 type Resolver struct{}
 `
 
-	writeStringToFile(filepath.Join(project.ModelPath(), "helper.go"), Templates["modelHelper"])
+	writeStringToFile(filepath.Join(project.ModelPath(), "helper.go"), templates.Templates["modelHelper"])
 	writeStringToFile(filepath.Join(project.ResolverPath(), "resolver.go"), resolverTemplate)
-	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), Templates["resolverHelper"])
+	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), templates.Templates["resolverHelper"])
 
 	err := os.MkdirAll(project.ScalarPath(), os.ModePerm)
 	check(err)
@@ -119,16 +120,16 @@ type Resolver struct{}
 
 func createAbsFiles(project *Project) {
 	serverData := map[string]interface{}{"importpath": project.ImportPath}
-	serverScript := executeTemplate(Templates["server"], serverData)
+	serverScript := executeTemplate(templates.Templates["server"], serverData)
 
 	procTemplate := `web: {{.appname}}`
 	procData := map[string]interface{}{"appname": project.Name}
 	procScript := executeTemplate(procTemplate, procData)
 
 	writeStringToFile(filepath.Join(project.AbsPath, "server.go"), serverScript)
-	writeStringToFile(filepath.Join(project.AbsPath, ".gitignore"), Templates["git"])
+	writeStringToFile(filepath.Join(project.AbsPath, ".gitignore"), templates.Templates["git"])
 	writeStringToFile(filepath.Join(project.AbsPath, "Procfile"), procScript)
-	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), Templates["config"])
+	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), templates.Templates["config"])
 	project.CreateGoalsToml()
 	// TODO: Create consts.go
 }

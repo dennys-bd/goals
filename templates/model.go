@@ -1,4 +1,4 @@
-package cmd
+package templates
 
 func initModel() {
 	Templates["fullmodel"] = `package model

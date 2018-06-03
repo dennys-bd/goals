@@ -1,4 +1,4 @@
-package cmd
+package templates
 
 func initHelpers() {
 	Templates["resolverHelper"] = `package resolver

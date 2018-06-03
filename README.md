@@ -28,7 +28,7 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] import graphql and scalar in model and resolver if needed
 * [ ] test goals init
 * [ ] remove templates from scaffold.go
-* [ ] create templates package?
+* [x] create templates package
 * [ ] create integration with gorm
 * [ ] replace goals command text
 * [ ] flag to resolver name on scaffold model
