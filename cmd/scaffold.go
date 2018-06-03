@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -21,12 +20,8 @@ var scaffoldCmd = &cobra.Command{
 		if len(args) < 2 {
 			er("Wrong arguments you should use a minimum of 2 arguments")
 		}
-		wd, err := os.Getwd()
-		if err != nil {
-			er(err)
-		}
 
-		project := RecreateProjectFromGoals(wd)
+		project := recreateProjectFromGoals()
 
 		createFiles(args[0], args[1:], project)
 	},

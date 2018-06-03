@@ -11,8 +11,9 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "goals",
 		Short: "Goals is a light boilerplate generator for graphql in golang",
-		Long: `Um monte de balbalbla
-pq aqui quebra linha e panz`,
+		Long: `Goals is a Golang/Graphql boilerplate generator yet in development.
+This application is a tool to generate files most used in a go/graphql application,
+You can create a new project and create new models with it.`,
 	}
 )
 

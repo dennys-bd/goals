@@ -90,36 +90,41 @@ func filepathHasPrefix(path string, prefix string) bool {
 
 }
 
-// RecreateProjectFromGoals return the project configs from Goals.toml
-func RecreateProjectFromGoals(path string) Project {
-	if !filepath.IsAbs(path) {
-		er(fmt.Sprintf("%v is not an absolute path", path))
-	}
-	data, err := ioutil.ReadFile(filepath.Join(path, "lib/Goals.toml"))
+// recreateProjectFromGoals return the project configs from Goals.toml
+func recreateProjectFromGoals() Project {
+	wd, err := os.Getwd()
+	check(err)
+
+	data, err := ioutil.ReadFile(filepath.Join(wd, "lib/Goals.toml"))
 	if err != nil {
 		er("This is not a goals project")
 	}
+	check(err)
+
+	p, err := RecreateProject(string(data))
+	check(err)
+
+	p.AbsPath = wd
+
+	return p
+}
+
+// RecreateProject returns the project configs based on a Project String
+func RecreateProject(projectString string) (Project, error) {
 
 	var m goalsToml
-	check(err)
-	_, err = toml.Decode(string(data), &m)
-	check(err)
-
-	m.Project.AbsPath = path
-
-	return m.Project
+	_, err := toml.Decode(projectString, &m)
+	return m.Project, err
 }
 
 // CreateGoalsToml create the file Goals.Toml
 // in which we save some of the project attributes
-func (p Project) CreateGoalsToml() {
-	template := fmt.Sprintf(`[project]
+func (p Project) CreateGoalsToml() string {
+	return fmt.Sprintf(`[project]
 	name = "%s"
+	import_path = "%s"
 	go_version = "%s"
-	app_mode = "%s"
-	import_path = "%s"`, p.Name, p.GoVersion, p.AppMode, p.ImportPath)
-
-	writeStringToFile(filepath.Join(p.LibPath(), "Goals.toml"), template)
+	app_mode = "%s"`, p.Name, p.ImportPath, p.GoVersion, p.AppMode)
 }
 
 //GqlPath is the path to package gqltype

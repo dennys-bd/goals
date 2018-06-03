@@ -130,7 +130,7 @@ func createAbsFiles(project *Project) {
 	writeStringToFile(filepath.Join(project.AbsPath, ".gitignore"), templates.Templates["git"])
 	writeStringToFile(filepath.Join(project.AbsPath, "Procfile"), procScript)
 	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), templates.Templates["config"])
-	project.CreateGoalsToml()
+	writeStringToFile(filepath.Join(project.LibPath(), "Goals.toml"), project.CreateGoalsToml())
 	// TODO: Create consts.go
 }
 
