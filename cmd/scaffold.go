@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var resolver string
+
 var scaffoldCmd = &cobra.Command{
 	Use:     "scaffold [name] atribute:type!",
 	Aliases: []string{"scaf", "s", "Scaffold"},
@@ -34,6 +36,10 @@ func createFiles(name string, args []string, project Project) {
 	writeSchema(name, schema, project)
 	writeResolver(name, resolver, project)
 
+}
+
+func init() {
+	scaffoldCmd.Flags().StringVarP(&resolver, "resolver", "r", "", "Name to the resolver variable of your model")
 }
 
 func writeModel(name string, template string, project Project) {
@@ -72,7 +78,9 @@ func writeSchema(name string, template string, project Project) {
 }
 
 func writeResolver(name string, template string, project Project) {
-	resolver := fmt.Sprintf("%s%sResolver", strings.ToLower(string(name[0])), name[1:])
+	if resolver == "" {
+		resolver = fmt.Sprintf("%s%sResolver", strings.ToLower(string(name[0])), name[1:])
+	}
 	abbreviation := toAbbreviation(name)
 
 	hasGraphql := strings.Index(template, "graphql.ID") > -1

@@ -29,7 +29,7 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] create templates package
 * [x] unit test for project.go
 * [x] replace goals command text
-* [ ] flag to resolver name on scaffold model
+* [x] flag to resolver name on scaffold model
 * [ ] create integration with gorm
 * [ ] flag to separate application in database directive ou gateway in init
 * [ ] flag to separate model in databased ou delivered from external api in scaffold
