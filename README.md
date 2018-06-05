@@ -34,6 +34,7 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [ ] flag to separate application in database directive ou gateway in init
 * [ ] flag to separate model in databased ou delivered from external api in scaffold
 * [ ] lib/schema should contains: Model Name, Resolver name, Type of retrival
+* [ ] parans to retrival on resolver name
 * [ ] authentication
 * [ ] dotEnv
 * [ ] cors
