@@ -30,19 +30,18 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] unit test for project.go
 * [x] replace goals command text
 * [x] flag to resolver name on scaffold model
-* [ ] create integration with gorm
-* [ ] flag to separate application in database directive ou gateway in init
-* [ ] flag to separate model in databased ou delivered from external api in scaffold
-* [ ] lib/schema should contains: Model Name, Resolver name, Type of retrival
-* [ ] parans to retrival on resolver name
 * [ ] authentication
 * [ ] dotEnv
 * [ ] cors
+* [ ] goals core
 * [ ] command runserver
+* [ ] relations should always be pointer?
+* [ ] lib/schema should contains: Model Name, Resolver name, Type of retrival
+* [ ] flag to separate model in databased ou delivered from external api in scaffold
 * [ ] command migrate
 * [ ] command s migration
-* [ ] goals core
-* [ ] relations should always be pointer?
-* [ ] hide package gqltype under goals core??
+* [ ] create integration with gorm
+* [ ] flag to separate application in database directive ou gateway in init
 * [ ] Write tests for check writing files
 * [ ] Brew installation
+* [ ] hide package gqltype under goals core??
