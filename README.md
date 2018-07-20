@@ -30,6 +30,8 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] unit test for project.go
 * [x] replace goals command text
 * [x] flag to resolver name on scaffold model
+* [ ] automagic model basics attributes (id, created_at, updated_at)
+* [ ] flag to dont create model basics attributes
 * [ ] authentication
 * [ ] dotEnv
 * [ ] cors
