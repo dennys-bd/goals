@@ -31,7 +31,7 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] replace goals command text
 * [x] flag to resolver name on scaffold model
 * [ ] remove page from server.go
-* [ ] create getDateInFormat method in model/helper
+* [x] create getDateInFormat method in model/helper
 * [ ] automagic model basics attributes (id, created_at, updated_at)
 * [ ] flag to dont create model basics attributes
 * [ ] time type should be string on graphql with format opptions

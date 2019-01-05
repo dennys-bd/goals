@@ -12,7 +12,7 @@ import (
 )
 
 // ConnectToAPI Connect to a url service on a given method with body params and inject the object response in v
-func ConnectToAPI(method string, url string, body *map[string]interface{}, header *map[string]string, v interface{}) (int, error) {
+func ConnectToAPI(method string, url string, body map[string]interface{}, header map[string]string, v interface{}) (int, error) {
 
 	client := &http.Client{}
 
@@ -62,47 +62,19 @@ func ConnectToAPI(method string, url string, body *map[string]interface{}, heade
 	return res.StatusCode, nil
 }
 
-func get(url string, body *map[string]interface{}, header *map[string]string, responseBody interface{}) (int, error) {
-	return ConnectToAPI("GET", url, body, header, responseBody)
+func get(url string, header map[string]string, body map[string]interface{},responseBody interface{}) (int, error) {
+	return ConnectToAPI(http.MethodGet, url, body, header, responseBody)
 }
-func post(url string, body *map[string]interface{}, header *map[string]string, responseBody interface{}) (int, error) {
+func post(url string, header map[string]string, body map[string]interface{}, responseBody interface{}) (int, error) {
 	return ConnectToAPI("POST", url, body, header, responseBody)
 }
-func put(url string, body *map[string]interface{}, header *map[string]string, responseBody interface{}) (int, error) {
+func put(url string, header map[string]string, body map[string]interface{}, responseBody interface{}) (int, error) {
 	return ConnectToAPI("PUT", url, body, header, responseBody)
 }
-func delete(url string, body *map[string]interface{}, header *map[string]string, responseBody interface{}) (int, error) {
+func delete(url string, header map[string]string, body map[string]interface{}, responseBody interface{}) (int, error) {
 	return ConnectToAPI("DELETE", url, body, header, responseBody)
 }
 
-func getHeaders(ctx *context.Context) *map[string]string {
-	m := make(map[string]string)
-	m["Content-Type"] = "application/json"
-	m["Accept"] = "application/json, text/plain, */*"
-	// TODO: Change the client_id
-	// m["client_id"] = "4"
-	if ctx != nil {
-		// TODO: APIGATEWAY MODE: Create here the types comming from context that will proceed as
-		// header in the request, applied in every single request e.g:
-		// con := *ctx
-		// m["access-token"] = con.Value(ContextKeyAuth).(string)
-
-	}
-	return &m
-}
-
-func getFeedParams(Cursor *int32) (int32, int32) {
-	var cursor int32
-	var limit int32
-	limit = 10
-
-	if Cursor != nil {
-		cursor = *Cursor
-		cursor = (cursor - 1) * 10
-	}
-
-	return cursor, limit
-}
 `
 	Templates["modelHelper"] = `package model
 
@@ -163,8 +135,19 @@ func dateFormat(s string) string {
 	s = strings.Replace(s, "ss", "05", -1)
 	s = strings.Replace(s, "s", "5", -1)
 	s = strings.Replace(s, "p4", "pm", -1)
-
 	return s
+}
+
+func getDateInFormat(date *time.Time, format *string) *string {
+	if date != nil {
+		if format != nil {
+			str := date.Format(dateFormat(*format))
+			return &str
+		}
+		str := date.Format(time.RFC3339)
+		return &str
+	}
+	return nil
 }
 
 func in(obj interface{}, s ...interface{}) bool {
