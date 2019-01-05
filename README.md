@@ -32,23 +32,26 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] flag to resolver name on scaffold model
 * [x] remove page from server.go
 * [x] create getDateInFormat method in model/helper
+* [ ] authentication (public and private resolvers)
+* [ ] create environments separation
+* [ ] relly on gorm to make databases access?
 * [ ] automagic model basics attributes (id, created_at, updated_at)
 * [ ] flag to dont create model basics attributes
 * [ ] time type should be string on graphql with format opptions
-* [ ] auto generate getter in 
+* [ ] auto generate getter in
+* [ ] fix goals scaffold syntax
 * [ ] accept params to resolver on scaffolding
-* [ ] authentication
 * [ ] dotEnv
-* [ ] cors
 * [ ] goals core
+* [ ] cors
 * [ ] command runserver
 * [ ] relations should always be pointer?
 * [ ] lib/schema should contains: Model Name, Resolver name, Type of retrival
 * [ ] flag to separate model in databased ou delivered from external api in scaffold
+* [ ] command makemigrations
 * [ ] command migrate
-* [ ] command s migration
 * [ ] create integration with gorm
 * [ ] flag to separate application in database directive ou gateway in init
+* [ ] goals admin
 * [ ] Write tests for check writing files
-* [ ] Brew installation
 * [ ] hide package gqltype under goals core??
