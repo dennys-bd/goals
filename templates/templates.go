@@ -4,7 +4,6 @@ package templates
 var Templates = make(map[string]string)
 
 func init() {
-
 	initServer()
 	initConfig()
 	initHelpers()
@@ -14,4 +13,5 @@ func init() {
 	initModel()
 	initSchema()
 	initResolver()
+	initServer()
 }

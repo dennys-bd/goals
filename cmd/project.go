@@ -174,3 +174,11 @@ func (p Project) LibPath() string {
 	}
 	return filepath.Join(p.AbsPath, "lib")
 }
+
+//StaticPath is the path to static files folder
+func (p Project) StaticPath() string {
+	if p.AbsPath == "" {
+		return ""
+	}
+	return filepath.Join(p.AbsPath, "static")
+}

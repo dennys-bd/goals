@@ -131,6 +131,7 @@ func createAbsFiles(project *Project) {
 	writeStringToFile(filepath.Join(project.AbsPath, "Procfile"), procScript)
 	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), templates.Templates["config"])
 	writeStringToFile(filepath.Join(project.LibPath(), "Goals.toml"), project.CreateGoalsToml())
+	writeStringToFile(filepath.Join(project.StaticPath(), "index.html"), templates.Templates["index.html"])
 	// TODO: Create consts.go
 }
 
