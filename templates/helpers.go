@@ -5,14 +5,13 @@ func initHelpers() {
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 )
 
 // ConnectToAPI Connect to a url service on a given method with body params and inject the object response in v
-func ConnectToAPI(method string, url string, body map[string]interface{}, header map[string]string, v interface{}) (int, error) {
+func ConnectToAPI(method string, url string, header map[string]string, body map[string]interface{}, v interface{}) (int, error) {
 
 	client := &http.Client{}
 
@@ -34,7 +33,7 @@ func ConnectToAPI(method string, url string, body map[string]interface{}, header
 
 	// 3. Put headers on request
 	if header != nil {
-		for k, v := range *header {
+		for k, v := range header {
 			req.Header.Add(k, v)
 		}
 	}
@@ -66,13 +65,13 @@ func get(url string, header map[string]string, body map[string]interface{},respo
 	return ConnectToAPI(http.MethodGet, url, body, header, responseBody)
 }
 func post(url string, header map[string]string, body map[string]interface{}, responseBody interface{}) (int, error) {
-	return ConnectToAPI("POST", url, body, header, responseBody)
+	return ConnectToAPI(http.MethodPost, url, body, header, responseBody)
 }
 func put(url string, header map[string]string, body map[string]interface{}, responseBody interface{}) (int, error) {
-	return ConnectToAPI("PUT", url, body, header, responseBody)
+	return ConnectToAPI(http.MethodPut, url, body, header, responseBody)
 }
 func delete(url string, header map[string]string, body map[string]interface{}, responseBody interface{}) (int, error) {
-	return ConnectToAPI("DELETE", url, body, header, responseBody)
+	return ConnectToAPI(http.MethodDelete, url, body, header, responseBody)
 }
 
 `
@@ -84,6 +83,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 )
 
 func cleanNomNumbers(phone *string) {

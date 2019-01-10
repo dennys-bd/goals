@@ -13,5 +13,5 @@ func init() {
 	initModel()
 	initSchema()
 	initResolver()
-	initServer()
+	initIndex()
 }

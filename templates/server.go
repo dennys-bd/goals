@@ -12,8 +12,8 @@ import (
 	"{{.importpath}}/app/resolver"
 	"{{.importpath}}/lib"
 
-	graphql "github.com/graph-gophers/graphql-go"
-	"github.com/graph-gophers/graphql-go/relay"
+	graphql "github.com/dennys-bd/goals/graphql"
+	"github.com/dennys-bd/goals/graphql/relay"
 )
 
 func main() {
