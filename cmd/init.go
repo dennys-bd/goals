@@ -69,7 +69,6 @@ func intializeProject(project *Project) {
 	createStructure(project)
 	createAbsFiles(project)
 	// TODO: createDatabase(project)
-	// TODO: createAuth(project)
 	// TODO: createDotEnv(project)
 	downloadDepedences(project)
 
@@ -80,6 +79,24 @@ func initializeDep(project *Project) {
 	err := cmd.Run()
 	check(err)
 
+	str := `package main
+
+	func main(){
+	}
+`
+	writeStringToFile(filepath.Join(project.AbsPath, "main.go"), str)
+
+	repositories := []string{"github.com/dennys-bd/goals"}
+
+	for _, s := range repositories {
+		cmd := exec.Command("dep", "ensure", "-add", s)
+		cmd.Dir = project.AbsPath
+		out, err := cmd.Output()
+		check(err)
+		println(string(out))
+	}
+
+	removeFile(filepath.Join(project.AbsPath, "main.go"))
 }
 
 func createGQLTypes(project *Project) {

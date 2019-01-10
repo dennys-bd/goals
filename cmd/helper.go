@@ -125,6 +125,14 @@ func writeStringToFile(path string, s string) {
 	}
 }
 
+func removeFile(path string) error {
+	if !exists(path) {
+		return fmt.Errorf("%v doesnt exists", path)
+	}
+	err := os.Remove(path)
+	return err
+}
+
 func exists(path string) bool {
 	if path == "" {
 		return false
