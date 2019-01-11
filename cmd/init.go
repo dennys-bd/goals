@@ -74,6 +74,7 @@ func intializeProject(project *Project) {
 
 }
 
+// "github.com/joho/godotenv" "github.com/jinzhu/gorm", "github.com/graph-gophers/graphql-go", "github.com/dgrijalva/jwt-go"
 func initializeDep(project *Project) {
 	cmd := exec.Command("dep", "init", project.AbsPath)
 	err := cmd.Run()
@@ -86,16 +87,16 @@ func initializeDep(project *Project) {
 `
 	writeStringToFile(filepath.Join(project.AbsPath, "main.go"), str)
 
-	repositories := []string{"github.com/dennys-bd/goals"}
+	repositories := []string{"dep ensure -add github.com/dennys-bd/goals", "go get golang.org/x/tools/cmd/goimports"}
 
 	for _, s := range repositories {
-		cmd := exec.Command("dep", "ensure", "-add", s)
+		// cmd := exec.Command("dep", "ensure", "-add", s)
+		cmd := exec.Command(s)
 		cmd.Dir = project.AbsPath
 		out, err := cmd.Output()
 		check(err)
 		println(string(out))
 	}
-
 	removeFile(filepath.Join(project.AbsPath, "main.go"))
 }
 
