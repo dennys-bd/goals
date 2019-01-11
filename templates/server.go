@@ -6,49 +6,34 @@ func initServer() {
 import (
 	"log"
 	"net/http"
-	"os"
 
-	"{{.importpath}}/app/gqltype"
 	"{{.importpath}}/app/resolver"
+	"{{.importpath}}/app/schema"
 	"{{.importpath}}/lib"
 
-	graphql "github.com/dennys-bd/goals/graphql"
-	"github.com/dennys-bd/goals/graphql/relay"
+	"github.com/dennys-bd/goals/core"
 )
 
 func main() {
 
-	if os.Getenv("ENVIRONMENT") != "production" {
-		http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write(page)
-		}))
-	}
-
-	if os.Getenv("GOALS_ENV") != "production" {
-		http.Handle("/", http.FileServer(http.Dir("./static")))
-	}
-
-	// fmt.Println(gqltype.Schema)
-	schema := graphql.MustParseSchema(gqltype.Schema, &resolver.Resolver{})
-
-	http.Handle("/graphql", injectViewerToContext(&relay.Handler{Schema: schema}))
+	core.StartWithResolver("/public", schema.GetSchema(), &resolver.Resolver{})
 
 	port := lib.GetPort()
 
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
-
-func injectViewerToContext(next http.Handler) http.Handler {
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		if (*r).Method == "OPTIONS" {
-			return
-		}
-
-		// con := context.WithValue(r.Context(), lib.ContextKeyAuth, r.Header.Get("access-token"))
-		next.ServeHTTP(w, r.WithContext(r.Context()))
-	})
-}
 `
+
+	// func injectViewerToContext(next http.Handler) http.Handler {
+
+	// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+	// 		if (*r).Method == "OPTIONS" {
+	// 			return
+	// 		}
+
+	// 		// con := context.WithValue(r.Context(), lib.ContextKeyAuth, r.Header.Get("access-token"))
+	// 		next.ServeHTTP(w, r.WithContext(r.Context()))
+	// 	})
+	// }
 }

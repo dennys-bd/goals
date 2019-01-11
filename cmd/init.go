@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/dennys-bd/goals/templates"
@@ -65,7 +66,6 @@ func intializeProject(project *Project) {
 	}
 
 	initializeDep(project)
-	createGQLTypes(project)
 	createStructure(project)
 	createAbsFiles(project)
 	// TODO: createDatabase(project)
@@ -74,7 +74,6 @@ func intializeProject(project *Project) {
 
 }
 
-// "github.com/joho/godotenv" "github.com/jinzhu/gorm", "github.com/graph-gophers/graphql-go", "github.com/dgrijalva/jwt-go"
 func initializeDep(project *Project) {
 	cmd := exec.Command("dep", "init", project.AbsPath)
 	err := cmd.Run()
@@ -87,11 +86,11 @@ func initializeDep(project *Project) {
 `
 	writeStringToFile(filepath.Join(project.AbsPath, "main.go"), str)
 
-	repositories := []string{"dep ensure -add github.com/dennys-bd/goals", "go get golang.org/x/tools/cmd/goimports"}
+	commands := []string{"dep ensure -add github.com/dennys-bd/goals", "go get golang.org/x/tools/cmd/goimports"}
 
-	for _, s := range repositories {
-		// cmd := exec.Command("dep", "ensure", "-add", s)
-		cmd := exec.Command(s)
+	for _, c := range commands {
+		cs := strings.Split(c, " ")
+		cmd := exec.Command(cs[0], cs[1:]...)
 		cmd.Dir = project.AbsPath
 		out, err := cmd.Output()
 		check(err)
@@ -100,40 +99,19 @@ func initializeDep(project *Project) {
 	removeFile(filepath.Join(project.AbsPath, "main.go"))
 }
 
-func createGQLTypes(project *Project) {
-	queryData := map[string]interface{}{"Gqltypes": "Queries", "Gqltype": "Query", "gqltypes": "queries"}
-	mutationData := map[string]interface{}{"Gqltypes": "Mutations", "Gqltype": "Mutation", "gqltypes": "mutations"}
-	subscriptionData := map[string]interface{}{"Gqltypes": "Subscriptions", "Gqltype": "Subscription", "gqltypes": "subscriptions"}
-
-	queryScript := executeTemplate(templates.Templates["gqltypes"], queryData)
-	mutationScript := executeTemplate(templates.Templates["gqltypes"], mutationData)
-	subscriptionScript := executeTemplate(templates.Templates["gqltypes"], subscriptionData)
-
-	writeStringToFile(filepath.Join(project.GqlPath(), "queries.go"), queryScript)
-	writeStringToFile(filepath.Join(project.GqlPath(), "mutations.go"), mutationScript)
-	writeStringToFile(filepath.Join(project.GqlPath(), "subscriptions.go"), subscriptionScript)
-	writeStringToFile(filepath.Join(project.GqlPath(), "scalars.go"), templates.Templates["scalar"])
-	writeStringToFile(filepath.Join(project.GqlPath(), "schema.go"), templates.Templates["schema"])
-	writeStringToFile(filepath.Join(project.GqlPath(), "types.go"), templates.Templates["types"])
-}
-
 func createStructure(project *Project) {
-	resolverTemplate := `package resolver
 
-// Resolver type for graphql
-type Resolver struct{}
-`
+	resData := map[string]interface{}{}
+	resScript := executeTemplate(templates.Templates["resolver"], resData)
+
+	schData := map[string]interface{}{"importpath": project.ImportPath}
+	schScript := executeTemplate(templates.Templates["schema"], schData)
 
 	writeStringToFile(filepath.Join(project.ModelPath(), "helper.go"), templates.Templates["modelHelper"])
-	writeStringToFile(filepath.Join(project.ResolverPath(), "resolver.go"), resolverTemplate)
 	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), templates.Templates["resolverHelper"])
-
-	err := os.MkdirAll(project.ScalarPath(), os.ModePerm)
-	check(err)
-
-	err = os.MkdirAll(project.SchemaPath(), os.ModePerm)
-	check(err)
-
+	writeStringToFile(filepath.Join(project.ResolverPath(), "resolver.go"), resScript)
+	writeStringToFile(filepath.Join(project.ScalarPath(), "scalar.go"), templates.Templates["scalar"])
+	writeStringToFile(filepath.Join(project.SchemaPath(), "schema.go"), schScript)
 }
 
 func createAbsFiles(project *Project) {
@@ -149,7 +127,6 @@ func createAbsFiles(project *Project) {
 	writeStringToFile(filepath.Join(project.AbsPath, "Procfile"), procScript)
 	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), templates.Templates["config"])
 	writeStringToFile(filepath.Join(project.LibPath(), "Goals.toml"), project.CreateGoalsToml())
-	writeStringToFile(filepath.Join(project.StaticPath(), "index.html"), templates.Templates["index.html"])
 	// TODO: Create consts.go
 }
 

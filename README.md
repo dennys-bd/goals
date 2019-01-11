@@ -32,7 +32,7 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] flag to resolver name on scaffold model
 * [x] remove page from server.go
 * [x] create getDateInFormat method in model/helper
-* [ ] Remove gqltype set it under goals core
+* [x] Remove gqltype set it under goals core
 * [ ] Goals core create and serve schemas (open and closed)
 * [ ] make scaffold a parent command with s model a sub command
 * [ ] create scaffold auth command
@@ -45,6 +45,7 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [ ] accept params to resolver on scaffolding model
 * [ ] dotEnv
 * [ ] cors
+* [ ] runserver with verbose flag
 * [ ] database integration
 * [ ] lib/schema should contains: Model Name, Resolver name, Type of retrival
 * [ ] automagic model basics attributes (id, created_at, updated_at)

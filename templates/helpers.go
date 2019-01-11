@@ -12,9 +12,6 @@ import (
 
 // ConnectToAPI Connect to a url service on a given method with body params and inject the object response in v
 func ConnectToAPI(method string, url string, header map[string]string, body map[string]interface{}, v interface{}) (int, error) {
-
-	client := &http.Client{}
-
 	// 1. Create Body
 	var b io.Reader
 	if body != nil {
@@ -39,6 +36,7 @@ func ConnectToAPI(method string, url string, header map[string]string, body map[
 	}
 
 	// 4. Run the request
+	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
 		return res.StatusCode, err
@@ -61,17 +59,17 @@ func ConnectToAPI(method string, url string, header map[string]string, body map[
 	return res.StatusCode, nil
 }
 
-func get(url string, header map[string]string, body map[string]interface{},responseBody interface{}) (int, error) {
-	return ConnectToAPI(http.MethodGet, url, body, header, responseBody)
+func get(url string, header map[string]string, body map[string]interface{}, responseBody interface{}) (int, error) {
+	return ConnectToAPI(http.MethodGet, url, header, body, responseBody)
 }
 func post(url string, header map[string]string, body map[string]interface{}, responseBody interface{}) (int, error) {
-	return ConnectToAPI(http.MethodPost, url, body, header, responseBody)
+	return ConnectToAPI(http.MethodPost, url, header, body, responseBody)
 }
 func put(url string, header map[string]string, body map[string]interface{}, responseBody interface{}) (int, error) {
-	return ConnectToAPI(http.MethodPut, url, body, header, responseBody)
+	return ConnectToAPI(http.MethodPut, url, header, body, responseBody)
 }
 func delete(url string, header map[string]string, body map[string]interface{}, responseBody interface{}) (int, error) {
-	return ConnectToAPI(http.MethodDelete, url, body, header, responseBody)
+	return ConnectToAPI(http.MethodDelete, url, header, body, responseBody)
 }
 
 `

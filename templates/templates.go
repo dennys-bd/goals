@@ -9,9 +9,8 @@ func init() {
 	initHelpers()
 	initConfig()
 	initGit()
-	initGql()
+	initStructure()
 	initModel()
 	initSchema()
 	initResolver()
-	initIndex()
 }

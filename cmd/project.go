@@ -111,7 +111,6 @@ func recreateProjectFromGoals() Project {
 
 // RecreateProject returns the project configs based on a Project String
 func RecreateProject(projectString string) (Project, error) {
-
 	var m goalsToml
 	_, err := toml.Decode(projectString, &m)
 	return m.Project, err
@@ -125,14 +124,6 @@ func (p Project) CreateGoalsToml() string {
 	import_path = "%s"
 	go_version = "%s"
 	app_mode = "%s"`, p.Name, p.ImportPath, p.GoVersion, p.AppMode)
-}
-
-//GqlPath is the path to package gqltype
-func (p Project) GqlPath() string {
-	if p.AbsPath == "" {
-		return ""
-	}
-	return filepath.Join(p.AbsPath, "app/gqltype")
 }
 
 //ResolverPath is the path to package resolver
@@ -173,12 +164,4 @@ func (p Project) LibPath() string {
 		return ""
 	}
 	return filepath.Join(p.AbsPath, "lib")
-}
-
-//StaticPath is the path to static files folder
-func (p Project) StaticPath() string {
-	if p.AbsPath == "" {
-		return ""
-	}
-	return filepath.Join(p.AbsPath, "static")
 }

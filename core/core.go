@@ -28,29 +28,29 @@ func StartWithResolver(endpoint, schemaString string, resolver interface{}, opt 
 
 // MountSchema from params
 func MountSchema(types, queries, mutations, subscriptions, scalars string) string {
-	schemaDefinition := `schema {\n`
+	schemaDefinition := "schema {\n"
 	if queries != "" {
-		schemaDefinition += `	query: Query\n`
+		schemaDefinition += "	query: Query\n"
 	}
 	if mutations != "" {
-		schemaDefinition += `	mutations: Mutations\n`
+		schemaDefinition += "	mutation: Mutation\n"
 	}
 	if subscriptions != "" {
-		schemaDefinition += `	subscription: Subscription\n`
+		schemaDefinition += "	subscription: Subscription\n"
 	}
-	schemaDefinition += `}`
+	schemaDefinition += "}\n"
 
 	schema := schemaDefinition
 	if queries != "" {
-		q := "type Query {\n" + queries + "\n}"
+		q := "type Query {" + queries + "}\n"
 		schema += q
 	}
 	if mutations != "" {
-		m := "type Mutation {\n" + mutations + "\n}"
+		m := "type Mutation {" + mutations + "}\n"
 		schema += m
 	}
 	if subscriptions != "" {
-		s := "type Subscription {\n" + subscriptions + "\n"
+		s := "type Subscription {" + subscriptions + "}\n"
 		schema += s
 	}
 	if scalars != "" {
