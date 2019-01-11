@@ -1,19 +1,23 @@
 # goals
-`goals` is a Golang/GraphQL Boilerplate Generator maybe a Framework.. `goals` is still in beta release.
+`goals` is a Golang/GraphQL Framework.. `goals` is still in beta release.
 
 ## installation
 `go get github.com/dennys-bd/goals`
 
 ## usage
-`goals` has 2 commands today
+`goals` has 2 main commands today
 
-`goals init [PROJECTNAME]` should start your project under your $GOPATH/src
+### goals init
+`goals init PROJECTNAME` should start your project under your $GOPATH/src
 
-`goals s [MODELNAME] attributeName:AttributeType! relationName:type:[ModelName]!`
+### goals scaffold
+`goals s g MODELNAME attributeName:AttributeType! relationName:type:[ModelName]!`
 should create a suitable model, schema and resolver structures for your new type
 
-covering commun graphql types: String, Int, Boolean, ID, Float, and Time from graph-gophers/graphql-go every other type will be treated as Scalar if you don't specifically declare type before modelName
+`goals s auth`
+should create a private resolver, with it's auth structures.
 
+covering commun graphql types: String, Int, Boolean, ID, Float, and Time from `github.com/graph-gophers/graphql-go` every other type will be treated as Scalar if you don't specifically declare type before modelName
 
 ## todo
 
@@ -35,14 +39,14 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] Remove gqltype set it under goals core
 * [x] Goals core create and serve schemas (open and closed)
 * [x] create scaffold auth command
-* [ ] remove templates folder
-* [ ] make scaffold a parent command with s model a sub command
+* [x] remove templates folder
+* [x] make scaffold a parent command with s model a sub command
 * [ ] auto generate json scalar on goals init
-* [ ] create environments separation
 * [ ] create runserver command
-* [ ] time type should be string on graphql with format opptions
+* [ ] create environments separation
 * [ ] auto generate getter in
 * [ ] fix goals scaffold model syntax
+* [ ] time type should be string on graphql with format opptions
 * [ ] accept params to resolver on scaffolding model
 * [ ] dotEnv
 * [ ] cors

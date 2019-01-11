@@ -4,9 +4,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
-	"github.com/dennys-bd/goals/templates"
 	"github.com/spf13/cobra"
 )
 
@@ -42,13 +42,20 @@ Init will not use an existing directory with contents.`,
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		print("Creating your project")
-		go func() {
+		f := func() {
 			for i := 0; i < 2; i++ {
 				time.Sleep(500 * time.Millisecond)
 				print(".")
 			}
 			time.Sleep(500 * time.Millisecond)
 			println(".")
+		}
+		go f()
+		go func() {
+			time.Sleep(2000 * time.Millisecond)
+			print("Downloading Depedences")
+			f()
+			println("It can take several minutes")
 		}()
 	},
 	PostRun: func(cmd *cobra.Command, args []string) {
@@ -64,13 +71,15 @@ func intializeProject(project *Project) {
 		er("Goals will not create a new project in a non empty directory: " + project.AbsPath)
 	}
 
+	initTemplates()
+	basicTemplates()
+
 	initializeDep(project)
 	createStructure(project)
 	createAbsFiles(project)
+	// downloadDepedences(project)
 	// TODO: createDatabase(project)
 	// TODO: createDotEnv(project)
-	downloadDepedences(project)
-
 }
 
 func initializeDep(project *Project) {
@@ -85,48 +94,42 @@ func initializeDep(project *Project) {
 `
 	writeStringToFile(filepath.Join(project.AbsPath, "main.go"), str)
 
-	// commands := []string{"dep ensure -add github.com/dennys-bd/goals"}
+	commands := []string{"dep ensure -add github.com/dennys-bd/goals"}
 
-	// for _, c := range commands {
-	// 	cs := strings.Split(c, " ")
-	// 	cmd := exec.Command(cs[0], cs[1:]...)
-	// 	cmd.Dir = project.AbsPath
-	// 	out, err := cmd.Output()
-	// 	check(err)
-	// 	println(string(out))
-	// }
+	for _, c := range commands {
+		cs := strings.Split(c, " ")
+		cmd := exec.Command(cs[0], cs[1:]...)
+		cmd.Dir = project.AbsPath
+		out, err := cmd.Output()
+		check(err)
+		println(string(out))
+	}
 	removeFile(filepath.Join(project.AbsPath, "main.go"))
 }
 
 func createStructure(project *Project) {
-
 	resData := map[string]interface{}{}
-	resScript := executeTemplate(templates.Templates["resolver"], resData)
+	resScript := executeTemplate(templates["resolver"], resData)
 
 	schData := map[string]interface{}{"importpath": project.ImportPath}
-	schScript := executeTemplate(templates.Templates["schema"], schData)
+	schScript := executeTemplate(templates["schema"], schData)
 
-	writeStringToFile(filepath.Join(project.ModelPath(), "helper.go"), templates.Templates["modelHelper"])
-	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), templates.Templates["resolverHelper"])
+	writeStringToFile(filepath.Join(project.ModelPath(), "helper.go"), templates["modelHelper"])
+	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), templates["resolverHelper"])
 	writeStringToFile(filepath.Join(project.ResolverPath(), "resolver.go"), resScript)
-	writeStringToFile(filepath.Join(project.ScalarPath(), "scalar.go"), templates.Templates["scalar"])
+	writeStringToFile(filepath.Join(project.ScalarPath(), "scalar.go"), templates["scalar"])
 	writeStringToFile(filepath.Join(project.SchemaPath(), "schema.go"), schScript)
 }
 
 func createAbsFiles(project *Project) {
 	serverData := map[string]interface{}{"importpath": project.ImportPath}
-	serverScript := executeTemplate(templates.Templates["server"], serverData)
-
-	procTemplate := `web: {{.appname}}`
-	procData := map[string]interface{}{"appname": project.Name}
-	procScript := executeTemplate(procTemplate, procData)
+	serverScript := executeTemplate(templates["server"], serverData)
 
 	writeStringToFile(filepath.Join(project.AbsPath, "server.go"), serverScript)
-	writeStringToFile(filepath.Join(project.AbsPath, ".gitignore"), templates.Templates["git"])
-	writeStringToFile(filepath.Join(project.AbsPath, "Procfile"), procScript)
-	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), templates.Templates["config"])
+	writeStringToFile(filepath.Join(project.AbsPath, ".gitignore"), templates["git"])
+	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), templates["config"])
 	writeStringToFile(filepath.Join(project.LibPath(), "Goals.toml"), project.CreateGoalsToml())
-	writeStringToFile(filepath.Join(project.LibPath(), "consts.toml"), templates.Templates["consts"])
+	writeStringToFile(filepath.Join(project.LibPath(), "consts.toml"), templates["consts"])
 }
 
 func downloadDepedences(project *Project) {

@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/dennys-bd/goals/templates"
 	"github.com/spf13/cobra"
 )
 
@@ -15,10 +14,11 @@ var resolverName string
 var authCmd = &cobra.Command{
 	Use:     "authorization [name]",
 	Aliases: []string{"auth"},
-	Short:   "Generate files for authorization",
-	Long: `Authorization (goals auth) will create
-a new resolver and it's structure to be parsed
-with a private schema that must be private.
+	Short:   "Generate structure for authorization",
+	Long: `Authorization (goals scaffold authorization or 
+symply goals s a) will create a new resolver 
+and schema (and their structures), to be registered 
+as a schema that must be private.
 Only with your authorization you can allow access.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 1 {
@@ -38,17 +38,21 @@ func init() {
 }
 
 func createAuthFiles(project Project) {
+
+	basicTemplates()
+	gqlTemplates()
+
 	modelName = strings.Title(modelName)
 	resolverName = strings.Title(resolverName)
 
 	abbreviation := toAbbreviation(modelName)
 
 	resData := map[string]interface{}{"importpath": project.ImportPath, "name": resolverName, "model": "User", "abbreviation": abbreviation}
-	resScript := executeTemplate(templates.Templates["resolver"], resData)
+	resScript := executeTemplate(templates["resolver"], resData)
 	writeStringToFile(filepath.Join(project.ResolverPath(), strings.ToLower(resolverName)+"_resolver.go"), resScript)
 
 	schData := map[string]interface{}{"importpath": project.ImportPath, "Name": resolverName, "name": strings.ToLower(resolverName)}
-	schScript := executeTemplate(templates.Templates["schema"], schData)
+	schScript := executeTemplate(templates["schema"], schData)
 	writeStringToFile(filepath.Join(project.SchemaPath(), strings.ToLower(resolverName)+"_schema.go"), schScript)
 
 	if !noModel {

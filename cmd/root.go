@@ -10,10 +10,11 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "goals",
-		Short: "Goals is a light boilerplate generator for graphql in golang",
-		Long: `Goals is a Golang/Graphql boilerplate generator yet in development.
+		Short: "Goals is Golang/GraphQL Framework",
+		Long: `Goals is a Golang/GraphQL Framework in development.
 This application is a tool to generate files most used in a go/graphql application,
-You can create a new project and create new models with it.`,
+You can create a new project and create new models with it.
+Goals is offering many functions to facilitate your life a GraphQL-Go developer.`,
 	}
 )
 
@@ -34,5 +35,4 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(scaffoldCmd)
 	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(authCmd)
 }
