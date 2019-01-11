@@ -23,24 +23,9 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from `g
 
 * [x] command init
 * [x] command scaffold
-* [x] write goalsfile
-* [x] retrieving project from goalsfile
-* [x] name fix on create project
-* [x] more directory options in goals init
-* [x] fix import model on resolver
-* [x] uppercase if the attribute name is id (model, resolver)
-* [x] import graphql and scalar in model and resolver if needed
-* [x] create templates package
-* [x] unit test for project.go
-* [x] replace goals command text
-* [x] flag to resolver name on scaffold model
-* [x] remove page from server.go
-* [x] create getDateInFormat method in model/helper
-* [x] Remove gqltype set it under goals core
-* [x] Goals core create and serve schemas (open and closed)
-* [x] create scaffold auth command
-* [x] remove templates folder
-* [x] make scaffold a parent command with s model a sub command
+* [x] command scaffold graphql
+* [x] command scaffold auth
+* [x] goals core to facilitate serving pages
 * [ ] auto generate json scalar on goals init
 * [ ] create runserver command
 * [ ] create environments separation
