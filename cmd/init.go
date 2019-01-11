@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/dennys-bd/goals/templates"
@@ -86,16 +85,16 @@ func initializeDep(project *Project) {
 `
 	writeStringToFile(filepath.Join(project.AbsPath, "main.go"), str)
 
-	commands := []string{"dep ensure -add github.com/dennys-bd/goals", "go get golang.org/x/tools/cmd/goimports"}
+	// commands := []string{"dep ensure -add github.com/dennys-bd/goals"}
 
-	for _, c := range commands {
-		cs := strings.Split(c, " ")
-		cmd := exec.Command(cs[0], cs[1:]...)
-		cmd.Dir = project.AbsPath
-		out, err := cmd.Output()
-		check(err)
-		println(string(out))
-	}
+	// for _, c := range commands {
+	// 	cs := strings.Split(c, " ")
+	// 	cmd := exec.Command(cs[0], cs[1:]...)
+	// 	cmd.Dir = project.AbsPath
+	// 	out, err := cmd.Output()
+	// 	check(err)
+	// 	println(string(out))
+	// }
 	removeFile(filepath.Join(project.AbsPath, "main.go"))
 }
 
@@ -127,7 +126,7 @@ func createAbsFiles(project *Project) {
 	writeStringToFile(filepath.Join(project.AbsPath, "Procfile"), procScript)
 	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), templates.Templates["config"])
 	writeStringToFile(filepath.Join(project.LibPath(), "Goals.toml"), project.CreateGoalsToml())
-	// TODO: Create consts.go
+	writeStringToFile(filepath.Join(project.LibPath(), "consts.toml"), templates.Templates["consts"])
 }
 
 func downloadDepedences(project *Project) {

@@ -34,4 +34,5 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(scaffoldCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(authCmd)
 }

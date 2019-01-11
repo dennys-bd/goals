@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/dennys-bd/goals/auth"
 	"github.com/dennys-bd/goals/graphql"
 	"github.com/dennys-bd/goals/graphql/relay"
 )
@@ -24,6 +25,22 @@ func StartWithResolver(endpoint, schemaString string, resolver interface{}, opt 
 
 	schema := graphql.MustParseSchema(schemaString, resolver, opt...)
 	http.Handle("/graphql"+endpoint, &relay.Handler{Schema: schema})
+}
+
+// StartWithPrivateResolver Starts the resolver's endpoint
+func StartWithPrivateResolver(endpoint, schemaString string, resolver graphql.PrivateResolver, opt ...graphql.SchemaOpt) {
+	if endpoint == "/" {
+		endpoint = ""
+	}
+
+	if os.Getenv("GOALS_ENV") != "production" {
+		http.Handle(endpoint+"/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(fmt.Sprintf(page, endpoint)))
+		}))
+	}
+
+	schema := graphql.MustParsePrivateSchema(schemaString, resolver, opt...)
+	http.Handle("/graphql"+endpoint, auth.InjectAuthToContext(&relay.Handler{Schema: schema}, resolver.GetAuthHeaders()...))
 }
 
 // MountSchema from params

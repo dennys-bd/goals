@@ -33,9 +33,10 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from gr
 * [x] remove page from server.go
 * [x] create getDateInFormat method in model/helper
 * [x] Remove gqltype set it under goals core
-* [ ] Goals core create and serve schemas (open and closed)
+* [x] Goals core create and serve schemas (open and closed)
+* [x] create scaffold auth command
+* [ ] remove templates folder
 * [ ] make scaffold a parent command with s model a sub command
-* [ ] create scaffold auth command
 * [ ] auto generate json scalar on goals init
 * [ ] create environments separation
 * [ ] create runserver command

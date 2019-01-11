@@ -55,7 +55,7 @@ func writeModel(name string, template string, project Project) {
 		importpath += fmt.Sprintf("	\"%v/app/scalar\"\n", project.ImportPath)
 	}
 	if hasGraphql {
-		importpath += "	graphql \"github.com/graph-gophers/graphql-go\"\n"
+		importpath += "\"github.com/dennys-bd/goals/graphql\"\n"
 	}
 
 	if (hasTime && hasScalar) || (hasTime && hasGraphql) || (hasScalar && hasGraphql) {

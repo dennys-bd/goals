@@ -16,35 +16,54 @@ import (
 	"{{.importpath}}/app/scalar"
 )
 
-// Concat here your types, queries, mutations and subscriptions
-// that will be in the general schema e.g.
+// Concat here your types, queries, mutations and
+// subscriptions that will be in the schema, e.g.
 // const queries = userQueries +
 // shoppingQueries
 
-const types = ""
+const {{if .name}}{{.name}}T{{else}}t{{end}}ypes = ""
 
-const queries = ""
+const {{if .name}}{{.name}}Q{{else}}q{{end}}ueries = ""
 
-const mutations = ""
+const {{if .name}}{{.name}}M{{else}}m{{end}}utations = ""
 
-const subscriptions = ""
+const {{if .name}}{{.name}}S{{else}}s{{end}}ubscriptions = ""
 
-// GetSchema returns the schema String
-func GetSchema() string {
-	return core.MountSchema(types, queries, mutations, subscriptions, scalar.Scalars)
+// Get{{.Name}}Schema returns the schema String
+func Get{{.Name}}Schema() string {
+	{{if .name}}return core.MountSchema({{.name}}Types, {{.name}}Queries, {{.name}}Mutations, {{.name}}Subscriptions, scalar.Scalars)
+	{{else}}return core.MountSchema(types, queries, mutations, subscriptions, scalar.Scalars){{end}}
 }
 `
 
 	Templates["resolver"] = `package resolver
-{{if .imports}}
-{{.imports}}
+{{if .importpath}}
+import (
+	"context"
+
+	"{{.importpath}}/app/model"
+	"{{.importpath}}/lib"
+)
 {{end}}
 // {{.name}}Resolver type for graphql
-type {{.name}}Resolver struct{ {{.model}} }
+type {{.name}}Resolver {{if .model}}struct { 
+	{{.abbreviation}} model.{{.model}}
+}{{else}}struct{}{{end}}
 {{if .name}}
-// FillAuthStruct bla
+// FillAuthStruct puts the user inside the AuthResolver
 func (r *{{.name}}Resolver) FillAuthStruct(ctx context.Context) {
-	// fmt.Printf("On Resolver: %v\n", ctx.Value(lib.ContextKeyAuth))
+	// TODO: Use ctx to get auth variables and set the AuthStruct
+	// E.G.
+	// id := ctx.Value(lib.ContextKeyAuth)
+	// DB.find(id, &r.u)
+}
+
+// GetAuthHeaders put in the context the headers you want
+// from the original request to the resolver
+func (r *{{.name}}Resolver) GetAuthHeaders() []string {
+	// TODO: return here the headers you want
+	// to come in context from the original request
+	return []string{lib.ContextKeyAuth.String()}
 }
 {{end}}`
 }
