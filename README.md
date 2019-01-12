@@ -35,7 +35,6 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from `g
 * [ ] accept params to resolver on scaffolding model
 * [ ] dotEnv
 * [ ] cors
-* [ ] runserver with verbose flag
 * [ ] database integration
 * [ ] lib/schema should contains: Model Name, Resolver name, Type of retrival
 * [ ] automagic model basics attributes (id, created_at, updated_at)
