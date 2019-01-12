@@ -5,7 +5,7 @@
 `go get github.com/dennys-bd/goals`
 
 ## usage
-`goals` has 2 main commands today
+`goals` has 3 main commands today
 
 ### goals init
 `goals init PROJECTNAME` should start your project under your $GOPATH/src
@@ -18,6 +18,13 @@ should create a suitable model, schema and resolver structures for your new type
 should create a private resolver, with it's auth structures.
 
 covering commun graphql types: String, Int, Boolean, ID, Float, and Time from `github.com/graph-gophers/graphql-go` every other type will be treated as Scalar if you don't specifically declare type before modelName
+
+### goals runserver
+`goals r`
+Start your server with some goals pattern configurations.
+You can change the port `goals r -p 3000`
+You can infer the port from a environment variable `goals r --env-port`
+You can set verbose on start to see check your schema `goals r -v`
 
 ## todo
 

@@ -129,7 +129,10 @@ func (p Project) CreateGoalsToml() string {
 	name = "%s"
 	import_path = "%s"
 	go_version = "%s"
-	app_mode = "%s"`, p.Name, p.ImportPath, p.GoVersion, p.AppMode)
+	app_mode = "%s"
+	
+[project.config]
+	port = 8080`, p.Name, p.ImportPath, p.GoVersion, p.AppMode)
 }
 
 //ResolverPath is the path to package resolver
