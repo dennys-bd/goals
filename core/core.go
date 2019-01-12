@@ -2,49 +2,94 @@ package core
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"reflect"
+	"time"
 
 	"github.com/dennys-bd/goals/auth"
 	"github.com/dennys-bd/goals/graphql"
 	"github.com/dennys-bd/goals/graphql/relay"
 )
 
-// StartWithResolver Starts the resolver's endpoint
-func StartWithResolver(endpoint, schemaString string, resolver interface{}, opt ...graphql.SchemaOpt) {
+var registers []register
 
-	if endpoint == "/" {
-		endpoint = ""
-	}
-
-	if os.Getenv("GOALS_ENV") != "production" {
-		http.Handle(endpoint+"/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(fmt.Sprintf(page, endpoint)))
-		}))
-	}
-
-	schema := graphql.MustParseSchema(schemaString, resolver, opt...)
-	http.Handle("/graphql"+endpoint, &relay.Handler{Schema: schema})
+type Schema struct {
+	name   string
+	schema string
 }
 
-// StartWithPrivateResolver Starts the resolver's endpoint
-func StartWithPrivateResolver(endpoint, schemaString string, resolver graphql.PrivateResolver, opt ...graphql.SchemaOpt) {
+type register struct {
+	endpoint string
+	schema   Schema
+	resolver interface{}
+	opt      []graphql.SchemaOpt
+}
+
+type CoreOpts struct {
+	port     string
+	graphiql bool
+}
+
+// RegisterResolverForSchema Starts the resolver's endpoint
+func RegisterResolverForSchema(endpoint string, schema Schema, resolver interface{}, opt ...graphql.SchemaOpt) {
 	if endpoint == "/" {
 		endpoint = ""
 	}
 
-	if os.Getenv("GOALS_ENV") != "production" {
-		http.Handle(endpoint+"/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(fmt.Sprintf(page, endpoint)))
-		}))
+	r := register{
+		endpoint: endpoint,
+		schema:   schema,
+		resolver: resolver,
 	}
 
-	schema := graphql.MustParsePrivateSchema(schemaString, resolver, opt...)
-	http.Handle("/graphql"+endpoint, auth.InjectAuthToContext(&relay.Handler{Schema: schema}, resolver.GetAuthHeaders()...))
+	registers = append(registers, r)
+}
+
+// RegisterPrivateResolverForSchema Starts the resolver's endpoint
+func RegisterPrivateResolverForSchema(endpoint string, schema Schema, resolver graphql.PrivateResolver, opt ...graphql.SchemaOpt) {
+	RegisterResolverForSchema(endpoint, schema, resolver, opt...)
+}
+
+func Server(opts CoreOpts) {
+	for _, reg := range registers {
+		if opts.graphiql || os.Getenv("GOALS_ENV") != "production" {
+			http.Handle(reg.endpoint+"/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(fmt.Sprintf(page, reg.endpoint)))
+			}))
+		}
+
+		schema := graphql.MustParseSchema(reg.schema.schema, reg.resolver)
+		if res, ok := reg.resolver.(graphql.PrivateResolver); ok {
+			http.Handle("/graphql"+reg.endpoint, auth.InjectAuthToContext(&relay.Handler{Schema: schema}, res.GetAuthHeaders()...))
+		} else {
+			http.Handle("/graphql"+reg.endpoint, &relay.Handler{Schema: schema})
+		}
+	}
+	go printServers(opts)
+	log.Fatal(http.ListenAndServe(":"+opts.port, nil))
+}
+
+func GetOpts() CoreOpts {
+	arg := os.Args[1]
+	return CoreOpts{port: arg}
+}
+
+func printServers(opts CoreOpts) {
+	time.Sleep(500 * time.Millisecond)
+	fmt.Printf("-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-\n")
+	for _, reg := range registers {
+		fmt.Printf("%s is registered at: http://localhost:%s/graphql%s\nWith the resolver: %s\nYou can visit it's GraphiQL page on http://localhost:%s%s\n",
+			reg.schema.name, opts.port, reg.endpoint, reflect.TypeOf(reg.resolver).Elem(), opts.port, reg.endpoint)
+		fmt.Printf("-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-\n")
+		time.Sleep(500 * time.Millisecond)
+	}
+	println("Your server is running, press ctrl+c to stop it.")
 }
 
 // MountSchema from params
-func MountSchema(types, queries, mutations, subscriptions, scalars string) string {
+func MountSchema(name, types, queries, mutations, subscriptions, scalars string) Schema {
 	schemaDefinition := "schema {\n"
 	if queries != "" {
 		schemaDefinition += "	query: Query\n"
@@ -76,7 +121,13 @@ func MountSchema(types, queries, mutations, subscriptions, scalars string) strin
 	if types != "" {
 		schema += types
 	}
-	return schema
+
+	s := Schema{
+		name:   name,
+		schema: schema,
+	}
+
+	return s
 }
 
 const page = `<!DOCTYPE html>

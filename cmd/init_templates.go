@@ -265,4 +265,39 @@ func in(obj interface{}, s ...interface{}) bool {
 	return false
 }
 `
+
+	templates["json"] = `package scalar
+
+import (
+	"encoding/json"
+	"errors"
+)
+
+// Json represents GraphQL's "Json" scalar type.
+type Json map[string]interface{}
+
+func (Json) ImplementsGraphQLType(name string) bool {
+	return name == "Json"
+}
+
+func (j *Json) UnmarshalGraphQL(input interface{}) error {
+	switch input := input.(type) {
+	case string:
+		return json.Unmarshal([]byte(input), j)
+	case map[string]interface{}:
+		*j = Json(input)
+		return nil
+	default:
+		return errors.New("wrong type")
+	}
+}
+`
+	templates["scalar"] = `package scalar
+
+// Scalars for graphql definition
+const Scalars = ` + "`" + `
+scalar Time
+scalar Json
+` + "`" + `
+`
 }

@@ -114,10 +114,7 @@ func createStructure(project *Project) {
 	schData := map[string]interface{}{"importpath": project.ImportPath}
 	schScript := executeTemplate(templates["schema"], schData)
 
-	writeStringToFile(filepath.Join(project.ModelPath(), "helper.go"), templates["modelHelper"])
-	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), templates["resolverHelper"])
 	writeStringToFile(filepath.Join(project.ResolverPath(), "resolver.go"), resScript)
-	writeStringToFile(filepath.Join(project.ScalarPath(), "scalar.go"), templates["scalar"])
 	writeStringToFile(filepath.Join(project.SchemaPath(), "schema.go"), schScript)
 }
 
@@ -129,7 +126,11 @@ func createAbsFiles(project *Project) {
 	writeStringToFile(filepath.Join(project.AbsPath, ".gitignore"), templates["git"])
 	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), templates["config"])
 	writeStringToFile(filepath.Join(project.LibPath(), "Goals.toml"), project.CreateGoalsToml())
-	writeStringToFile(filepath.Join(project.LibPath(), "consts.toml"), templates["consts"])
+	writeStringToFile(filepath.Join(project.LibPath(), "consts.go"), templates["consts"])
+	writeStringToFile(filepath.Join(project.ScalarPath(), "scalar.go"), templates["scalar"])
+	writeStringToFile(filepath.Join(project.ScalarPath(), "json.go"), templates["json"])
+	writeStringToFile(filepath.Join(project.ModelPath(), "helper.go"), templates["modelHelper"])
+	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), templates["resolverHelper"])
 }
 
 func downloadDepedences(project *Project) {

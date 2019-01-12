@@ -22,6 +22,12 @@ type Project struct {
 	Name       string
 	GoVersion  string `toml:"go_version"`
 	AppMode    string `toml:"app_mode"`
+	Config     Config `toml:"config"`
+}
+
+// Config model
+type Config struct {
+	Port int `toml:"port"`
 }
 
 // NewProject returns Project with specified project name.

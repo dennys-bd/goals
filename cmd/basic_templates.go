@@ -1,14 +1,6 @@
 package cmd
 
 func basicTemplates() {
-	templates["scalar"] = `package scalar
-
-// Scalars for graphql definition
-const Scalars = ` + "`" + `
-scalar Time
-` + "`" + `
-`
-
 	templates["schema"] = `package schema
 	
 import (
@@ -30,9 +22,9 @@ const {{if .name}}{{.name}}M{{else}}m{{end}}utations = ""
 const {{if .name}}{{.name}}S{{else}}s{{end}}ubscriptions = ""
 
 // Get{{.Name}}Schema returns the schema String
-func Get{{.Name}}Schema() string {
+func Get{{.Name}}Schema() core.Schema {
 	{{if .name}}return core.MountSchema({{.name}}Types, {{.name}}Queries, {{.name}}Mutations, {{.name}}Subscriptions, scalar.Scalars)
-	{{else}}return core.MountSchema(types, queries, mutations, subscriptions, scalar.Scalars){{end}}
+	{{else}}return core.MountSchema("{{.Name}}Schema", types, queries, mutations, subscriptions, scalar.Scalars){{end}}
 }
 `
 
@@ -45,8 +37,8 @@ import (
 	"{{.importpath}}/lib"
 )
 {{end}}
-// {{if .name}}{{.name}}{{else}}Public{{end}}Resolver type for graphql
-type {{if .name}}{{.name}}{{else}}Public{{end}}Resolver {{if .model}}struct { 
+// {{.name}}Resolver type for graphql
+type {{.name}}Resolver {{if .model}}struct { 
 	{{.abbreviation}} model.{{.model}}
 }{{else}}struct{}{{end}}
 {{if .name}}
