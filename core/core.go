@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/dennys-bd/goals/auth"
@@ -29,10 +30,11 @@ type register struct {
 
 type CoreOpts struct {
 	port     string
+	verbose  bool
 	graphiql bool
 }
 
-// RegisterResolverForSchema Starts the resolver's endpoint
+// RegisterResolverForSchema register your schema to a resolver in an endpoint
 func RegisterResolverForSchema(endpoint string, schema Schema, resolver interface{}, opt ...graphql.SchemaOpt) {
 	if endpoint == "/" {
 		endpoint = ""
@@ -47,16 +49,19 @@ func RegisterResolverForSchema(endpoint string, schema Schema, resolver interfac
 	registers = append(registers, r)
 }
 
-// RegisterPrivateResolverForSchema Starts the resolver's endpoint
+// RegisterPrivateResolverForSchema register your private schema to a resolver in an endpoint
 func RegisterPrivateResolverForSchema(endpoint string, schema Schema, resolver graphql.PrivateResolver, opt ...graphql.SchemaOpt) {
 	RegisterResolverForSchema(endpoint, schema, resolver, opt...)
 }
 
+// Server is user to run your goals application,
+// User It after registering yours schemas.
 func Server(opts CoreOpts) {
 	for _, reg := range registers {
 		if opts.graphiql || os.Getenv("GOALS_ENV") != "production" {
+			innerPage := fmt.Sprintf(page, reg.endpoint)
 			http.Handle(reg.endpoint+"/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte(fmt.Sprintf(page, reg.endpoint)))
+				w.Write([]byte(innerPage))
 			}))
 		}
 
@@ -73,7 +78,8 @@ func Server(opts CoreOpts) {
 
 func GetOpts() CoreOpts {
 	arg := os.Args[1]
-	return CoreOpts{port: arg}
+	arg2, _ := strconv.ParseBool(os.Args[2])
+	return CoreOpts{port: arg, verbose: arg2}
 }
 
 func printServers(opts CoreOpts) {
@@ -82,6 +88,9 @@ func printServers(opts CoreOpts) {
 	for _, reg := range registers {
 		fmt.Printf("%s is registered at: http://localhost:%s/graphql%s\nWith the resolver: %s\nYou can visit it's GraphiQL page on http://localhost:%s%s\n",
 			reg.schema.name, opts.port, reg.endpoint, reflect.TypeOf(reg.resolver).Elem(), opts.port, reg.endpoint)
+		if opts.verbose {
+			fmt.Printf("Check the schema:\n`%s`\n", reg.schema.schema)
+		}
 		fmt.Printf("-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-\n")
 		time.Sleep(500 * time.Millisecond)
 	}
