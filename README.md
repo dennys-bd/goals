@@ -26,7 +26,6 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from `g
 * [x] command scaffold graphql
 * [x] command scaffold auth
 * [x] goals core to facilitate serving pages
-* [x] auto generate json scalar on goals init
 * [x] create runserver command
 * [ ] create environments separation
 * [ ] auto generate getter in
