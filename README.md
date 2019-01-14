@@ -25,7 +25,8 @@ Every other type will be treated as Scalar if you don't specifically declare typ
 Start your server with some goals pattern configurations.  
 You can change the port `goals r -p 3000`  
 You can infer the port from a environment variable `goals r --env-port`  
-You can set verbose on start to see check your schema `goals r -v`
+You can set verbose on start to see check your schema `goals r -v`  
+You can set your `GOALS_ENV` environment variable with the flag `--env` or `-e`
 
 ## todo
 
@@ -37,7 +38,7 @@ You can set verbose on start to see check your schema `goals r -v`
 * [x] create runserver command
 * [x] environment separation ready (dotEnv)
 * [ ] goals init should print command resposes in realtime
-* [ ] fix goals scaffold model syntax
+* [ ] fix goals scaffold graphql syntax
 * [ ] time type should be string on graphql with format opptions
 * [ ] accept params to resolver on scaffolding model
 * [ ] auto generate getter in
