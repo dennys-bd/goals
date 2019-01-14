@@ -4,23 +4,17 @@ func initTemplates() {
 	templates["server"] = `package main
 	
 import (
-	"log"
-	"net/http"
-
+	"github.com/dennys-bd/goals/core"
 	"{{.importpath}}/app/resolver"
 	"{{.importpath}}/app/schema"
-	"{{.importpath}}/lib"
-
-	"github.com/dennys-bd/goals/core"
 )
 
 func main() {
+	opts := core.GetOpts()
 
 	core.StartWithResolver("/public", schema.GetSchema(), &resolver.PublicResolver{})
 
-	port := lib.GetPort()
-
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	core.Server(opts)
 }
 `
 
@@ -75,20 +69,6 @@ Temporary Items
 
 #vscode
 .vscode/*
-`
-
-	templates["config"] = `package lib
-
-import "os"
-
-// GetPort returns the port to start the server
-func GetPort() string {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	return port
-}
 `
 
 	templates["consts"] = `package lib

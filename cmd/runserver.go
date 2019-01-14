@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"strconv"
 
+	"github.com/dennys-bd/goals/core"
+	errs "github.com/dennys-bd/goals/shortcuts/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -31,18 +33,13 @@ func init() {
 	runServerCmd.Flags().StringVarP(&port, "port", "p", "", "Set the port to your server.")
 	runServerCmd.Flags().BoolVar(&envPort, "env-port", false, "Select the port from your environment variables (PORT)")
 	runServerCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose prints more information about your Server.")
+	runServerCmd.Flags().StringVarP(&environment, "env", "e", "", "Set the environments to start your Goals application.")
 }
 
-func runserver(project Project) {
+func runserver(project core.Project) {
 
-	p := strconv.Itoa(project.Config.Port)
-
-	if envPort {
-		p = os.Getenv("PORT")
-	}
-	if port != "" {
-		p = port
-	}
+	p := loadPort(project)
+	loadDotEnv(project)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd := exec.Command("go", "run", "server.go", p, strconv.FormatBool(verbose))
@@ -65,8 +62,33 @@ func runserver(project Project) {
 	}()
 
 	err = cmd.Wait()
-	check(err)
+	errs.CheckEx(err)
 	if errStdout != nil || errStderr != nil {
 		log.Fatal("failed to capture stdout or stderr\n")
+	}
+}
+
+func loadPort(project core.Project) string {
+	p := strconv.Itoa(project.Config.Port)
+
+	if envPort {
+		p = os.Getenv("PORT")
+	}
+	if port != "" {
+		p = port
+	}
+
+	return p
+}
+
+func loadDotEnv(project core.Project) {
+	project.LoadDotEnv()
+
+	if os.Getenv("GOALS_ENV") == "" {
+		os.Setenv("GOALS_ENV", "development")
+	}
+
+	if environment != "" {
+		os.Setenv("GOALS_ENV", environment)
 	}
 }

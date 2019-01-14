@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dennys-bd/goals/core"
+	errs "github.com/dennys-bd/goals/shortcuts/errors"
+	oss "github.com/dennys-bd/goals/shortcuts/os"
 	"github.com/spf13/cobra"
 )
 
@@ -27,15 +30,15 @@ Init will not use an existing directory with contents.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 		_, err := os.Getwd()
-		check(err)
+		errs.Check(err)
 
-		var project *Project
+		var project *core.Project
 		if len(args) == 0 {
-			er("please insert the project name")
+			errs.Ex("please insert the project name")
 		} else if len(args) == 1 {
-			project = NewProject(args[0])
+			project = newProject(args[0])
 		} else {
-			er("please provide only one argument")
+			errs.Ex("please provide only one argument")
 		}
 
 		intializeProject(project)
@@ -63,12 +66,12 @@ Init will not use an existing directory with contents.`,
 	},
 }
 
-func intializeProject(project *Project) {
-	if !exists(project.AbsPath) {
+func intializeProject(project *core.Project) {
+	if !oss.Exists(project.AbsPath) {
 		err := os.MkdirAll(project.AbsPath, os.ModePerm)
-		check(err)
-	} else if !isEmpty(project.AbsPath) {
-		er("Goals will not create a new project in a non empty directory: " + project.AbsPath)
+		errs.CheckEx(err)
+	} else if !oss.IsEmpty(project.AbsPath) {
+		errs.Ex("Goals will not create a new project in a non empty directory: " + project.AbsPath)
 	}
 
 	initTemplates()
@@ -82,10 +85,10 @@ func intializeProject(project *Project) {
 	// TODO: createDotEnv(project)
 }
 
-func initializeDep(project *Project) {
+func initializeDep(project *core.Project) {
 	cmd := exec.Command("dep", "init", project.AbsPath)
 	err := cmd.Run()
-	check(err)
+	errs.CheckEx(err)
 
 	str := `package main
 
@@ -101,13 +104,13 @@ func initializeDep(project *Project) {
 		cmd := exec.Command(cs[0], cs[1:]...)
 		cmd.Dir = project.AbsPath
 		out, err := cmd.Output()
-		check(err)
+		errs.CheckEx(err)
 		println(string(out))
 	}
 	removeFile(filepath.Join(project.AbsPath, "main.go"))
 }
 
-func createStructure(project *Project) {
+func createStructure(project *core.Project) {
 	resData := map[string]interface{}{}
 	resScript := executeTemplate(templates["resolver"], resData)
 
@@ -118,14 +121,13 @@ func createStructure(project *Project) {
 	writeStringToFile(filepath.Join(project.SchemaPath(), "schema.go"), schScript)
 }
 
-func createAbsFiles(project *Project) {
+func createAbsFiles(project *core.Project) {
 	serverData := map[string]interface{}{"importpath": project.ImportPath}
 	serverScript := executeTemplate(templates["server"], serverData)
 
 	writeStringToFile(filepath.Join(project.AbsPath, "server.go"), serverScript)
 	writeStringToFile(filepath.Join(project.AbsPath, ".gitignore"), templates["git"])
-	writeStringToFile(filepath.Join(project.LibPath(), "config.go"), templates["config"])
-	writeStringToFile(filepath.Join(project.LibPath(), "Goals.toml"), project.CreateGoalsToml())
+	writeStringToFile(filepath.Join(project.ConfigPath(), "Goals.toml"), project.CreateGoalsToml())
 	writeStringToFile(filepath.Join(project.LibPath(), "consts.go"), templates["consts"])
 	writeStringToFile(filepath.Join(project.ScalarPath(), "scalar.go"), templates["scalar"])
 	writeStringToFile(filepath.Join(project.ScalarPath(), "json.go"), templates["json"])
@@ -133,9 +135,9 @@ func createAbsFiles(project *Project) {
 	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), templates["resolverHelper"])
 }
 
-func downloadDepedences(project *Project) {
+func downloadDepedences(project *core.Project) {
 	cmd := exec.Command("dep", "ensure")
 	cmd.Dir = project.AbsPath
 	err := cmd.Run()
-	check(err)
+	errs.CheckEx(err)
 }

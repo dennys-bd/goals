@@ -35,17 +35,17 @@ You can set verbose on start to see check your schema `goals r -v`
 * [x] command scaffold auth
 * [x] goals core to facilitate serving pages
 * [x] create runserver command
-* [ ] create environments separation
-* [ ] auto generate getter in
-* [ ] time type should be string on graphql with format opptions
+* [x] environment separation ready (dotEnv)
+* [ ] goals init should print command resposes in realtime
 * [ ] fix goals scaffold model syntax
+* [ ] time type should be string on graphql with format opptions
 * [ ] accept params to resolver on scaffolding model
-* [ ] dotEnv
-* [ ] cors
+* [ ] auto generate getter in
+* [ ] Ennable cors options
 * [ ] database integration
 * [ ] lib/schema should contains: Model Name, Resolver name, Type of retrival
 * [ ] automagic model basics attributes (id, created_at, updated_at)
-* [ ] flag to dont create model basics attributes on goals s model
+* [ ] flag to dont create model basics attributes on goals s graphql
 * [ ] command makemigrations
 * [ ] command migrate
 * [ ] flag to separate application in database directive ou gateway in init

@@ -23,7 +23,7 @@ const {{if .name}}{{.name}}S{{else}}s{{end}}ubscriptions = ""
 
 // Get{{.Name}}Schema returns the schema String
 func Get{{.Name}}Schema() core.Schema {
-	{{if .name}}return core.MountSchema({{.name}}Types, {{.name}}Queries, {{.name}}Mutations, {{.name}}Subscriptions, scalar.Scalars)
+	{{if .name}}return core.MountSchema("Schema", {{.name}}Types, {{.name}}Queries, {{.name}}Mutations, {{.name}}Subscriptions, scalar.Scalars)
 	{{else}}return core.MountSchema("{{.Name}}Schema", types, queries, mutations, subscriptions, scalar.Scalars){{end}}
 }
 `

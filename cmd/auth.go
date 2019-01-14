@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/dennys-bd/goals/core"
+	errs "github.com/dennys-bd/goals/shortcuts/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +24,7 @@ as a schema that must be private.
 Only with your authorization you can allow access.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 1 {
-			er("You can pass only one argument")
+			errs.Ex("You can pass only one argument")
 		}
 
 		project := recreateProjectFromGoals()
@@ -37,7 +39,7 @@ func init() {
 	authCmd.Flags().StringVarP(&resolverName, "resolver", "r", "Auth", "Name to your auth resolver")
 }
 
-func createAuthFiles(project Project) {
+func createAuthFiles(project core.Project) {
 
 	basicTemplates()
 	gqlTemplates()

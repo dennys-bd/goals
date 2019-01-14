@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/dennys-bd/goals/core"
+	errs "github.com/dennys-bd/goals/shortcuts/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +22,7 @@ based on a model's description will create
 it's structure, nammed: Model, Schema and Resolver.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 {
-			er("Wrong arguments you should use a minimum of 2 arguments")
+			errs.Ex("Wrong arguments you should use a minimum of 2 arguments")
 		}
 
 		project := recreateProjectFromGoals()
@@ -29,7 +31,7 @@ it's structure, nammed: Model, Schema and Resolver.`,
 	},
 }
 
-func createFiles(name string, args []string, project Project) {
+func createFiles(name string, args []string, project core.Project) {
 	model, schema, resolver := getTemplates(args)
 	name = strings.Title(name)
 	gqlTemplates()
@@ -43,7 +45,7 @@ func init() {
 	gqlCmd.Flags().StringVarP(&resolver, "resolver", "r", "", "Name to the resolver variable of your model")
 }
 
-func writeModel(name string, template string, project Project) {
+func writeModel(name string, template string, project core.Project) {
 	hasGraphql := strings.Index(template, "graphql.ID") > -1
 	hasScalar := strings.Index(template, "scalar.") > -1
 	hasTime := strings.Index(template, "time.Time") > -1
@@ -72,13 +74,13 @@ func writeModel(name string, template string, project Project) {
 	writeStringToFile(filepath.Join("app/model", fmt.Sprintf("%s.go", strings.ToLower(name))), modelScript)
 }
 
-func writeSchema(name string, template string, project Project) {
+func writeSchema(name string, template string, project core.Project) {
 	data := map[string]string{"schema": template, "Name": name}
 	schemaScript := executeTemplate(templates["scafschema"], data)
 	writeStringToFile(filepath.Join("app/schema", fmt.Sprintf("%ssch.go", strings.ToLower(name))), schemaScript)
 }
 
-func writeResolver(name string, template string, project Project) {
+func writeResolver(name string, template string, project core.Project) {
 	if resolver == "" {
 		resolver = fmt.Sprintf("%s%sResolver", strings.ToLower(string(name[0])), name[1:])
 	}
@@ -135,7 +137,7 @@ func getTemplates(args []string) (model string, schema string, resolver string) 
 			sB.WriteString(GetSchemaLine(attr, tyName))
 			rB.WriteString(GetResolverLine(attr, tyName, true))
 		} else {
-			er(fmt.Sprintf("Bad Syntax in %s", attribute))
+			errs.Ex(fmt.Sprintf("Error: Bad Syntax in %s", attribute))
 		}
 	}
 
@@ -163,10 +165,10 @@ func GetModelLine(attribute string, typeName string, isModel bool) string {
 				typeName = typeName[:len(typeName)-1]
 			}
 		} else {
-			er(fmt.Sprintf("Bad Syntax: %s should close list with ]", typeName))
+			errs.Ex(fmt.Sprintf("Bad Syntax: %s should close list with ]", typeName))
 		}
 	} else if strings.HasSuffix(typeName, "]") {
-		er(fmt.Sprintf("Bad Syntax: %s should start list with [ before close", typeName))
+		errs.Ex(fmt.Sprintf("Bad Syntax: %s should start list with [ before close", typeName))
 	}
 
 	if !isModel {

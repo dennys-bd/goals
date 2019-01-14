@@ -10,6 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 	"unicode"
+
+	errs "github.com/dennys-bd/goals/shortcuts/errors"
+	oss "github.com/dennys-bd/goals/shortcuts/os"
 )
 
 var srcPaths []string
@@ -25,19 +28,13 @@ func init() {
 		// Note, checking the GOPATH first to avoid invoking the go toolchain if
 		// possible.
 
-		// goExecutable := os.Getenv("COBRA_GO_EXECUTABLE")
-		// if len(goExecutable) <= 0 {
-		// 	goExecutable = "go"
-		// }
-		goExecutable := "go"
-
-		out, err := exec.Command(goExecutable, "env", "GOPATH").Output()
-		check(err)
+		out, err := exec.Command("go", "env", "GOPATH").Output()
+		errs.CheckEx(err)
 
 		toolchainGoPath := strings.TrimSpace(string(out))
 		goPaths = filepath.SplitList(toolchainGoPath)
 		if len(goPaths) == 0 {
-			er("$GOPATH is not set")
+			errs.Ex("$GOPATH is not set")
 		}
 	}
 	srcPaths = make([]string, 0, len(goPaths))
@@ -46,28 +43,16 @@ func init() {
 	}
 }
 
-func check(err error) {
-	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
-	}
-}
-
-func er(msg interface{}) {
-	fmt.Println("Error:", msg)
-	os.Exit(1)
-}
-
 func executeTemplate(tmplStr string, data interface{}) string {
 	tmpl, err := template.New("").Funcs(template.FuncMap{"comment": commentifyString}).Parse(tmplStr)
 	if err != nil {
-		er(err)
+		errs.Ex(err)
 	}
 
 	buf := new(bytes.Buffer)
 	err = tmpl.Execute(buf, data)
 	if err != nil {
-		er(err)
+		errs.Ex(err)
 	}
 	return buf.String()
 }
@@ -97,7 +82,7 @@ func commentifyString(in string) string {
 }
 
 func writeToFile(path string, r io.Reader) error {
-	if exists(path) {
+	if oss.Exists(path) {
 		return fmt.Errorf("%v already exists", path)
 	}
 
@@ -121,68 +106,16 @@ func writeToFile(path string, r io.Reader) error {
 func writeStringToFile(path string, s string) {
 	err := writeToFile(path, strings.NewReader(s))
 	if err != nil {
-		er(err)
+		errs.Ex(err)
 	}
 }
 
 func removeFile(path string) error {
-	if !exists(path) {
+	if !oss.Exists(path) {
 		return fmt.Errorf("%v doesnt exists", path)
 	}
 	err := os.Remove(path)
 	return err
-}
-
-func exists(path string) bool {
-	if path == "" {
-		return false
-	}
-	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	if !os.IsNotExist(err) {
-		er(err)
-	}
-	return false
-}
-
-func getGoVersion() string {
-	v, err := exec.Command("go", "version").Output()
-	check(err)
-	vl := strings.Split(string(v), " ")
-	return vl[2]
-}
-
-// isEmpty checks if a given path is empty.
-// Hidden files in path are ignored.
-func isEmpty(path string) bool {
-	fi, err := os.Stat(path)
-	if err != nil {
-		er(err)
-	}
-
-	if !fi.IsDir() {
-		return fi.Size() == 0
-	}
-
-	f, err := os.Open(path)
-	if err != nil {
-		er(err)
-	}
-	defer f.Close()
-
-	names, err := f.Readdirnames(-1)
-	if err != nil && err != io.EOF {
-		er(err)
-	}
-
-	for _, name := range names {
-		if len(name) > 0 && name[0] != '.' {
-			return false
-		}
-	}
-	return true
 }
 
 func toSnake(in string) string {
@@ -213,4 +146,11 @@ func toAbbreviation(in string) string {
 	}
 
 	return string(out)
+}
+
+func getGoVersion() string {
+	v, err := exec.Command("go", "version").Output()
+	errs.CheckEx(err)
+	vl := strings.Split(string(v), " ")
+	return vl[2]
 }

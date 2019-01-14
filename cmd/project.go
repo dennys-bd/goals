@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,34 +8,22 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/dennys-bd/goals/core"
+	errs "github.com/dennys-bd/goals/shortcuts/errors"
+	oss "github.com/dennys-bd/goals/shortcuts/os"
 )
 
 type goalsToml struct {
-	Project Project
+	Project core.Project
 }
 
-// Project model
-type Project struct {
-	AbsPath    string `toml:"abs_path"`
-	ImportPath string `toml:"import_path"`
-	Name       string
-	GoVersion  string `toml:"go_version"`
-	AppMode    string `toml:"app_mode"`
-	Config     Config `toml:"config"`
-}
-
-// Config model
-type Config struct {
-	Port int `toml:"port"`
-}
-
-// NewProject returns Project with specified project name.
-func NewProject(projectName string) *Project {
+// newProject returns Project with specified project name.
+func newProject(projectName string) *core.Project {
 	if projectName == "" {
-		er("can't create project with blank name")
+		errs.Ex("can't create project with blank name")
 	}
 
-	p := new(Project)
+	p := new(core.Project)
 
 	p.GoVersion = getGoVersion()
 	p.AppMode = "gateway"
@@ -48,7 +35,7 @@ func NewProject(projectName string) *Project {
 	// then use working directory.
 	if p.AbsPath == "" {
 		wd, err := os.Getwd()
-		check(err)
+		errs.CheckEx(err)
 
 		for _, srcPath := range srcPaths {
 			goPath := filepath.Dir(srcPath)
@@ -72,15 +59,39 @@ func NewProject(projectName string) *Project {
 	return p
 }
 
+// recreateProjectFromGoals return the project configs from Goals.toml
+func recreateProjectFromGoals() core.Project {
+	wd, err := os.Getwd()
+	errs.CheckEx(err)
+
+	data, err := ioutil.ReadFile(filepath.Join(wd, "config/Goals.toml"))
+	if err != nil {
+		errs.Ex("This is not a goals project")
+	}
+
+	p, err := recreateProject(string(data))
+	errs.CheckEx(err)
+
+	p.AbsPath = wd
+
+	return p
+}
+
+// recreateProject returns the project configs based on a Project String
+func recreateProject(projectString string) (core.Project, error) {
+	var m goalsToml
+	_, err := toml.Decode(projectString, &m)
+	return m.Project, err
+}
+
 // findPackage returns full path to existing go package in GOPATHs.
 func findPackage(packageName string) string {
 	for _, srcPath := range srcPaths {
 		packagePath := filepath.Join(srcPath, packageName)
-		if exists(packagePath) {
+		if oss.Exists(packagePath) {
 			return packagePath
 		}
 	}
-
 	return ""
 }
 
@@ -94,83 +105,4 @@ func filepathHasPrefix(path string, prefix string) bool {
 	}
 	return path[0:len(prefix)] == prefix
 
-}
-
-// recreateProjectFromGoals return the project configs from Goals.toml
-func recreateProjectFromGoals() Project {
-	wd, err := os.Getwd()
-	check(err)
-
-	data, err := ioutil.ReadFile(filepath.Join(wd, "lib/Goals.toml"))
-	if err != nil {
-		er("This is not a goals project")
-	}
-	check(err)
-
-	p, err := RecreateProject(string(data))
-	check(err)
-
-	p.AbsPath = wd
-
-	return p
-}
-
-// RecreateProject returns the project configs based on a Project String
-func RecreateProject(projectString string) (Project, error) {
-	var m goalsToml
-	_, err := toml.Decode(projectString, &m)
-	return m.Project, err
-}
-
-// CreateGoalsToml create the file Goals.Toml
-// in which we save some of the project attributes
-func (p Project) CreateGoalsToml() string {
-	return fmt.Sprintf(`[project]
-	name = "%s"
-	import_path = "%s"
-	go_version = "%s"
-	app_mode = "%s"
-	
-[project.config]
-	port = 8080`, p.Name, p.ImportPath, p.GoVersion, p.AppMode)
-}
-
-//ResolverPath is the path to package resolver
-func (p Project) ResolverPath() string {
-	if p.AbsPath == "" {
-		return ""
-	}
-	return filepath.Join(p.AbsPath, "app/resolver")
-}
-
-//ScalarPath is the path to package scalar
-func (p Project) ScalarPath() string {
-	if p.AbsPath == "" {
-		return ""
-	}
-	return filepath.Join(p.AbsPath, "app/scalar")
-}
-
-//ModelPath is the path to package model
-func (p Project) ModelPath() string {
-	if p.AbsPath == "" {
-		return ""
-	}
-	return filepath.Join(p.AbsPath, "app/model")
-}
-
-//SchemaPath is the path to package schema
-func (p Project) SchemaPath() string {
-	if p.AbsPath == "" {
-		return ""
-	}
-	return filepath.Join(p.AbsPath, "app/schema")
-}
-
-//LibPath is the path to package lib
-func (p Project) LibPath() string {
-	if p.AbsPath == "" {
-		return ""
-	}
-	return filepath.Join(p.AbsPath, "lib")
 }
