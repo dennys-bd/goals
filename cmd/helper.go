@@ -157,27 +157,27 @@ func getGoVersion() string {
 }
 
 func runCmd(cmd *exec.Cmd) {
-	var stdoutBuf bytes.Buffer
+	var stdoutBuf, stderrBuf bytes.Buffer
 
 	stdoutIn, _ := cmd.StdoutPipe()
-	// stderrIn, _ := cmd.StderrPipe()
+	stderrIn, _ := cmd.StderrPipe()
 
-	var errStdout error
+	var errStdout, errStderr error
 	stdout := io.MultiWriter(os.Stdout, &stdoutBuf)
-	// stderr := io.MultiWriter(os.Stderr, &stderrBuf)
+	stderr := io.MultiWriter(os.Stderr, &stderrBuf)
 	err := cmd.Start()
+	errs.CheckEx(err)
 
 	go func() {
 		_, errStdout = io.Copy(stdout, stdoutIn)
 	}()
 
-	// go func() {
-	// 	_, errStderr = io.Copy(stderr, stderrIn)
-	// }()
+	go func() {
+		_, errStderr = io.Copy(stderr, stderrIn)
+	}()
 
-	err = cmd.Wait()
-	errs.CheckEx(err)
-	if errStdout != nil {
-		log.Fatal("failed to capture stdout")
+	cmd.Wait()
+	if errStdout != nil || errStderr != nil {
+		log.Fatal("failed to capture stdout or stderr\n")
 	}
 }
