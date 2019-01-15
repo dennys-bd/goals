@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/dennys-bd/goals/core"
 	errs "github.com/dennys-bd/goals/shortcuts/errors"
@@ -42,11 +44,8 @@ Init will not use an existing directory with contents.`,
 
 		intializeProject(project)
 	},
-	PreRun: func(cmd *cobra.Command, args []string) {
-		println("Creating your project...")
-	},
 	PostRun: func(cmd *cobra.Command, args []string) {
-		println("Done!")
+		println("Your Goals application was successfully created!")
 	},
 }
 
@@ -57,14 +56,14 @@ func intializeProject(project *core.Project) {
 	} else if !oss.IsEmpty(project.AbsPath) {
 		errs.Ex("Goals will not create a new project in a non empty directory: " + project.AbsPath)
 	}
+	println("Creating your Goals Application, it can take some minutes.")
 
 	initTemplates()
 	basicTemplates()
 
 	initializeDep(project)
 	createStructure(project)
-	createAbsFiles(project)
-	// downloadDepedences(project)
+	// downloaddependencies(project)
 	// TODO: createDatabase(project)
 	// TODO: createDotEnv(project)
 }
@@ -79,6 +78,8 @@ func initializeDep(project *core.Project) {
 	func main(){
 }
 `
+	in := make(chan bool)
+	go printWait(in)
 	writeStringToFile(filepath.Join(project.AbsPath, "main.go"), str)
 
 	commands := []string{"dep ensure -add github.com/dennys-bd/goals", "git init"}
@@ -87,8 +88,11 @@ func initializeDep(project *core.Project) {
 		cs := strings.Split(c, " ")
 		cmd := exec.Command(cs[0], cs[1:]...)
 		cmd.Dir = project.AbsPath
-		runCmd(cmd)
+		err := cmd.Run()
+		errs.CheckEx(err)
 	}
+	in <- true
+	<-in
 	removeFile(filepath.Join(project.AbsPath, "main.go"))
 }
 
@@ -99,14 +103,11 @@ func createStructure(project *core.Project) {
 	schData := map[string]interface{}{"importpath": project.ImportPath}
 	schScript := executeTemplate(templates["schema"], schData)
 
-	writeStringToFile(filepath.Join(project.ResolverPath(), "resolver.go"), resScript)
-	writeStringToFile(filepath.Join(project.SchemaPath(), "schema.go"), schScript)
-}
-
-func createAbsFiles(project *core.Project) {
 	serverData := map[string]interface{}{"importpath": project.ImportPath}
 	serverScript := executeTemplate(templates["server"], serverData)
 
+	writeStringToFile(filepath.Join(project.ResolverPath(), "resolver.go"), resScript)
+	writeStringToFile(filepath.Join(project.SchemaPath(), "schema.go"), schScript)
 	writeStringToFile(filepath.Join(project.AbsPath, "server.go"), serverScript)
 	writeStringToFile(filepath.Join(project.AbsPath, ".gitignore"), templates["git"])
 	writeStringToFile(filepath.Join(project.ConfigPath(), "Goals.toml"), project.CreateGoalsToml())
@@ -117,9 +118,38 @@ func createAbsFiles(project *core.Project) {
 	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), templates["resolverHelper"])
 }
 
-func downloadDepedences(project *core.Project) {
+func downloadDependencies(project *core.Project) {
 	cmd := exec.Command("dep", "ensure")
 	cmd.Dir = project.AbsPath
 	err := cmd.Run()
 	errs.CheckEx(err)
+}
+
+func printWait(in chan bool) {
+	ticker := time.Tick(750 * time.Millisecond)
+	<-ticker
+	fmt.Print("Fetching your dependencies.")
+	<-ticker
+	fmt.Printf("\rFetching your dependencies..")
+
+	dot := true
+	for {
+		<-ticker
+		select {
+		case <-in:
+			fmt.Printf("\rFetching your dependencies...\n")
+			fmt.Println("All dependencies installed.")
+			<-ticker
+			in <- true
+			break
+		default:
+			if dot {
+				fmt.Printf("\rFetching your dependencies..%s", ".")
+				dot = false
+			} else {
+				fmt.Printf("\rFetching your dependencies..%s", " ")
+				dot = true
+			}
+		}
+	}
 }

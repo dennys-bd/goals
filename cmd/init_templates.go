@@ -12,7 +12,7 @@ import (
 func main() {
 	opts := core.GetOpts()
 
-	core.RegisterResolverForSchema("/public", schema.GetSchema(), &resolver.Resolver{})
+	core.RegisterSchema("/public", schema.GetSchema(), &resolver.Resolver{})
 
 	core.Server(opts)
 }

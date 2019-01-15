@@ -37,12 +37,12 @@ You can set your `GOALS_ENV` environment variable with the flag `--env` or `-e`
 * [x] goals core to facilitate serving pages
 * [x] create runserver command
 * [x] environment separation ready (dotEnv)
-* [ ] goals init should print command resposes in realtime
 * [ ] fix goals scaffold graphql syntax
 * [ ] time type should be string on graphql with format opptions
 * [ ] accept params to resolver on scaffolding model
 * [ ] auto generate getter in
 * [ ] Ennable cors options
+* [ ] Choose to serve graphilQL on CoreOpts
 * [ ] database integration
 * [ ] lib/schema should contains: Model Name, Resolver name, Type of retrival
 * [ ] automagic model basics attributes (id, created_at, updated_at)

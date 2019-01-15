@@ -34,8 +34,8 @@ type CoreOpts struct {
 	graphiql bool
 }
 
-// RegisterResolverForSchema register your schema to a resolver in an endpoint
-func RegisterResolverForSchema(endpoint string, schema Schema, resolver interface{}, opt ...graphql.SchemaOpt) {
+// RegisterSchema register your schema to a resolver in an endpoint
+func RegisterSchema(endpoint string, schema Schema, resolver interface{}, opt ...graphql.SchemaOpt) {
 	if endpoint == "/" {
 		endpoint = ""
 	}
@@ -49,9 +49,9 @@ func RegisterResolverForSchema(endpoint string, schema Schema, resolver interfac
 	registers = append(registers, r)
 }
 
-// RegisterPrivateResolverForSchema register your private schema to a resolver in an endpoint
-func RegisterPrivateResolverForSchema(endpoint string, schema Schema, resolver graphql.PrivateResolver, opt ...graphql.SchemaOpt) {
-	RegisterResolverForSchema(endpoint, schema, resolver, opt...)
+// RegisterPrivateSchema register your private schema to a resolver in an endpoint
+func RegisterPrivateSchema(endpoint string, schema Schema, resolver graphql.PrivateResolver, opt ...graphql.SchemaOpt) {
+	RegisterSchema(endpoint, schema, resolver, opt...)
 }
 
 // Server is user to run your goals application,
