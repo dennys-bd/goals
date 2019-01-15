@@ -165,9 +165,7 @@ func runCmd(cmd *exec.Cmd) {
 	var errStdout, errStderr error
 	stdout := io.MultiWriter(os.Stdout, &stdoutBuf)
 	stderr := io.MultiWriter(os.Stderr, &stderrBuf)
-	err := cmd.Start()
-	errs.CheckEx(err)
-
+	cmd.Start()
 	go func() {
 		_, errStdout = io.Copy(stdout, stdoutIn)
 	}()
@@ -175,7 +173,6 @@ func runCmd(cmd *exec.Cmd) {
 	go func() {
 		_, errStderr = io.Copy(stderr, stderrIn)
 	}()
-
 	cmd.Wait()
 	if errStdout != nil || errStderr != nil {
 		log.Fatal("failed to capture stdout or stderr\n")
