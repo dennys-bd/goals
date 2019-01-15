@@ -1,15 +1,11 @@
 package cmd
 
 import (
-	"bytes"
-	"io"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
 
 	"github.com/dennys-bd/goals/core"
-	errs "github.com/dennys-bd/goals/shortcuts/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -41,31 +37,10 @@ func runserver(project core.Project) {
 	p := loadPort(project)
 	loadDotEnv(project)
 
-	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd := exec.Command("go", "run", "server.go", p, strconv.FormatBool(verbose))
 	cmd.Dir = project.AbsPath
 
-	stdoutIn, _ := cmd.StdoutPipe()
-	stderrIn, _ := cmd.StderrPipe()
-
-	var errStdout, errStderr error
-	stdout := io.MultiWriter(os.Stdout, &stdoutBuf)
-	stderr := io.MultiWriter(os.Stderr, &stderrBuf)
-	err := cmd.Start()
-
-	go func() {
-		_, errStdout = io.Copy(stdout, stdoutIn)
-	}()
-
-	go func() {
-		_, errStderr = io.Copy(stderr, stderrIn)
-	}()
-
-	err = cmd.Wait()
-	errs.CheckEx(err)
-	if errStdout != nil || errStderr != nil {
-		log.Fatal("failed to capture stdout or stderr\n")
-	}
+	runCmd(cmd)
 }
 
 func loadPort(project core.Project) string {

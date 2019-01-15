@@ -5,7 +5,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/dennys-bd/goals/core"
 	errs "github.com/dennys-bd/goals/shortcuts/errors"
@@ -44,22 +43,7 @@ Init will not use an existing directory with contents.`,
 		intializeProject(project)
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
-		print("Creating your project")
-		f := func() {
-			for i := 0; i < 2; i++ {
-				time.Sleep(500 * time.Millisecond)
-				print(".")
-			}
-			time.Sleep(500 * time.Millisecond)
-			println(".")
-		}
-		go f()
-		go func() {
-			time.Sleep(2000 * time.Millisecond)
-			print("Downloading Depedences")
-			f()
-			println("It can take several minutes")
-		}()
+		println("Creating your project...")
 	},
 	PostRun: func(cmd *cobra.Command, args []string) {
 		println("Done!")
@@ -93,19 +77,17 @@ func initializeDep(project *core.Project) {
 	str := `package main
 
 	func main(){
-	}
+}
 `
 	writeStringToFile(filepath.Join(project.AbsPath, "main.go"), str)
 
-	commands := []string{"dep ensure -add github.com/dennys-bd/goals"}
+	commands := []string{"dep ensure -add github.com/dennys-bd/goals", "git init"}
 
 	for _, c := range commands {
 		cs := strings.Split(c, " ")
 		cmd := exec.Command(cs[0], cs[1:]...)
 		cmd.Dir = project.AbsPath
-		out, err := cmd.Output()
-		errs.CheckEx(err)
-		println(string(out))
+		runCmd(cmd)
 	}
 	removeFile(filepath.Join(project.AbsPath, "main.go"))
 }

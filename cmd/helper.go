@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -153,4 +154,30 @@ func getGoVersion() string {
 	errs.CheckEx(err)
 	vl := strings.Split(string(v), " ")
 	return vl[2]
+}
+
+func runCmd(cmd *exec.Cmd) {
+	var stdoutBuf, stderrBuf bytes.Buffer
+
+	stdoutIn, _ := cmd.StdoutPipe()
+	stderrIn, _ := cmd.StderrPipe()
+
+	var errStdout, errStderr error
+	stdout := io.MultiWriter(os.Stdout, &stdoutBuf)
+	stderr := io.MultiWriter(os.Stderr, &stderrBuf)
+	err := cmd.Start()
+
+	go func() {
+		_, errStdout = io.Copy(stdout, stdoutIn)
+	}()
+
+	go func() {
+		_, errStderr = io.Copy(stderr, stderrIn)
+	}()
+
+	err = cmd.Wait()
+	errs.CheckEx(err)
+	if errStdout != nil || errStderr != nil {
+		log.Fatal("failed to capture stdout or stderr\n")
+	}
 }
