@@ -12,6 +12,7 @@ import (
 	"github.com/dennys-bd/goals/auth"
 	"github.com/dennys-bd/goals/graphql"
 	"github.com/dennys-bd/goals/graphql/relay"
+	errs "github.com/dennys-bd/goals/shortcuts/errors"
 )
 
 var registers []register
@@ -50,6 +51,9 @@ func RegisterSchema(endpoint string, schema Schema, resolver interface{}, opt ..
 }
 
 // RegisterPrivateSchema register your private schema to a resolver in an endpoint
+//
+// RegisterPrivateSchema only calls RegisterSchema, but you may to use it if you want
+// to garantee that your resolver is a PrivateResolver and you have a closed Schema.
 func RegisterPrivateSchema(endpoint string, schema Schema, resolver graphql.PrivateResolver, opt ...graphql.SchemaOpt) {
 	RegisterSchema(endpoint, schema, resolver, opt...)
 }
@@ -102,6 +106,8 @@ func MountSchema(name, types, queries, mutations, subscriptions, scalars string)
 	schemaDefinition := "schema {\n"
 	if queries != "" {
 		schemaDefinition += "	query: Query\n"
+	} else {
+		errs.Ex(fmt.Sprintf("Your query can't be empty. Error in your schema: \"%s\n", name))
 	}
 	if mutations != "" {
 		schemaDefinition += "	mutation: Mutation\n"
