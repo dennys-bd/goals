@@ -107,7 +107,7 @@ func MountSchema(name, types, queries, mutations, subscriptions, scalars string)
 	if queries != "" {
 		schemaDefinition += "	query: Query\n"
 	} else {
-		errs.Ex(fmt.Sprintf("Your query can't be empty. Error in your schema: \"%s\n", name))
+		errs.Ex(fmt.Sprintf("Your query can't be empty. Error in your schema: \"%s\"\n", name))
 	}
 	if mutations != "" {
 		schemaDefinition += "	mutation: Mutation\n"
