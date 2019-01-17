@@ -58,6 +58,6 @@ func createAuthFiles(project core.Project) {
 	writeStringToFile(filepath.Join(project.SchemaPath(), strings.ToLower(resolverName)+"_schema.go"), schScript)
 
 	if !noModel {
-		writeModel(modelName, "	ID		 graphql.ID\n	Name	 string\n	Email	 string\n	Password string\n", project)
+		writeModel(modelName, "", "	ID		 graphql.ID\n	Name	 string\n	Email	 string\n	Password string\n", project)
 	}
 }

@@ -1,9 +1,9 @@
 package cmd
 
 func gqlTemplates() {
-	templates["scafmodel"] = `package model
-	
-{{.importpath}}// {{.Name}} Model
+	templates["scafmodel"] = `package model	
+
+{{if .importpath}}{{.importpath}}{{end}}// {{.Name}} Model
 type {{.Name}} struct {
 {{.model}}}	
 `
@@ -32,5 +32,20 @@ const {{.Name}}Queries = ""
 
 // {{.Name}}Mutations defines the graphql Mutations for {{.Name}}
 const {{.Name}}Mutations = ""
+`
+
+	templates["getDate"] = `
+// Get{{.Attribute}} return model_name's {{.Attribute}} formated or not
+func ({{.abbreviation}} model_name) Get{{.Attribute}}(format *string) {{.notMandatory}}{{.list}}{{.notInList}}string {
+	{{if .list}}{{if .notMandatory}}if {{.abbreviation}}.{{.Attribute}} == nil {
+		return nil
+	}
+	{{end}}dates := make([]{{.notInList}}string, len({{.notMandatory}}{{.abbreviation}}.{{.Attribute}}))
+	for i := range dates {
+		{{if .notInList}}dates[i] = *(getDateInFormat({{if .notInList}}&{{end}}{{.abbreviation}}.{{.Attribute}}[i])){{else}}dates[i] = getDateInFormat({{if .notInList}}&{{end}}{{.abbreviation}}.{{.Attribute}}[i]){{end}}
+	}
+	return {{if .notMandatory}}&{{end}}dates
+	{{else}}{{if .notMandatory}}return getDateInFormat({{.abbreviation}}.{{.Attribute}}, format){{else}}return *(getDateInFormat(&{{.abbreviation}}.{{.Attribute}}, format)){{end}}{{end}}
+}
 `
 }

@@ -14,7 +14,7 @@ import (
 var resolver string
 
 var gqlCmd = &cobra.Command{
-	Use:     "graphql Name atribute:type!",
+	Use:     "graphql Name 'atribute:type!'",
 	Aliases: []string{"gql", "g"},
 	Short:   "Creates graphql model's structure",
 	Long: `Graphql (goals scaffold graphql or symply goals s g)
@@ -32,10 +32,10 @@ it's structure, nammed: Model, Schema and Resolver.`,
 }
 
 func createFiles(name string, args []string, project core.Project) {
-	model, schema, resolver := getTemplates(args)
-	name = strings.Title(name)
 	gqlTemplates()
-	writeModel(name, model, project)
+	model, schema, resolver, modelMethods := getTemplates(args)
+	name = strings.Title(name)
+	writeModel(name, modelMethods, model, project)
 	writeSchema(name, schema, project)
 	writeResolver(name, resolver, project)
 
@@ -45,31 +45,40 @@ func init() {
 	gqlCmd.Flags().StringVarP(&resolver, "resolver", "r", "", "Name to the resolver variable of your model")
 }
 
-func writeModel(name string, template string, project core.Project) {
-	hasGraphql := strings.Index(template, "graphql.ID") > -1
-	hasScalar := strings.Index(template, "scalar.") > -1
-	hasTime := strings.Index(template, "time.Time") > -1
-
+func writeModel(name, methods, template string, project core.Project) {
 	importpath := ""
-	if hasTime {
-		importpath = "	\"time\"\n\n"
-	}
-	if hasScalar {
-		importpath += fmt.Sprintf("	\"%v/app/scalar\"\n", project.ImportPath)
-	}
-	if hasGraphql {
+	countImports := 0
+	if strings.Index(template, "graphql.ID") > -1 {
 		importpath += "\"github.com/dennys-bd/goals/graphql\"\n"
+		countImports++
+	}
+	if strings.Index(template, "scalar.") > -1 {
+		importpath += fmt.Sprintf("	\"%v/app/scalar\"\n", project.ImportPath)
+		countImports++
+	}
+	if strings.Index(template, "time.Time") > -1 {
+		importpath = "	\"time\"\n\n"
+		countImports++
 	}
 
-	if (hasTime && hasScalar) || (hasTime && hasGraphql) || (hasScalar && hasGraphql) {
+	data := make(map[string]interface{})
+
+	if countImports > 1 {
 		importpath = fmt.Sprintf("import (\n%v)\n\n", importpath)
+		data = map[string]interface{}{"model": template, "Name": name, "importpath": importpath}
+	} else if countImports == 1 {
+		importpath = "import " + importpath
+		data = map[string]interface{}{"model": template, "Name": name, "importpath": importpath}
 	} else {
-		importpath = "import " + importpath + "\n"
+		data = map[string]interface{}{"model": template, "Name": name}
 	}
 
-	data := map[string]string{"model": template, "Name": name, "importpath": importpath}
-
-	modelScript := replaceTemplate(templates["scafmodel"], data)
+	modelScript := executeTemplate(templates["scafmodel"], data)
+	modelScript += methods
+	modelScript = strings.Replace(modelScript, "&#34;", "\"", -1)
+	modelScript = strings.Replace(modelScript, "&amp;", "&", -1)
+	modelScript = strings.Replace(modelScript, "model_name", name, -1)
+	modelScript = strings.Replace(modelScript, "&#39;", "'", -1)
 
 	writeStringToFile(filepath.Join("app/model", fmt.Sprintf("%s.go", strings.ToLower(name))), modelScript)
 }
@@ -77,7 +86,7 @@ func writeModel(name string, template string, project core.Project) {
 func writeSchema(name string, template string, project core.Project) {
 	data := map[string]string{"schema": template, "Name": name}
 	schemaScript := executeTemplate(templates["scafschema"], data)
-	writeStringToFile(filepath.Join("app/schema", fmt.Sprintf("%ssch.go", strings.ToLower(name))), schemaScript)
+	writeStringToFile(filepath.Join("app/schema", fmt.Sprintf("%s_schema.go", strings.ToLower(name))), schemaScript)
 }
 
 func writeResolver(name string, template string, project core.Project) {
@@ -116,43 +125,39 @@ func writeResolver(name string, template string, project core.Project) {
 
 	resolverScript := replaceTemplate(templates["scafresolver"], data)
 
-	writeStringToFile(filepath.Join("app/resolver", fmt.Sprintf("%ss.go", strings.ToLower(name))), resolverScript)
+	writeStringToFile(filepath.Join("app/resolver", fmt.Sprintf("%s_resolver.go", strings.ToLower(name))), resolverScript)
 }
 
-func getTemplates(args []string) (model string, schema string, resolver string) {
+func getTemplates(args []string) (model, schema, resolver, modelMethods string) {
 
-	var mB, sB, rB bytes.Buffer
-
-	for _, attribute := range args {
-		arguments := strings.Split(attribute, ":")
-		if len(arguments) == 2 {
-			attr, tyName := arguments[0], arguments[1]
-			mB.WriteString(GetModelLine(attr, tyName, false))
-			sB.WriteString(GetSchemaLine(attr, tyName))
-			rB.WriteString(GetResolverLine(attr, tyName, false))
-
-		} else if len(arguments) == 3 && arguments[1] == "type" {
-			attr, tyName := arguments[0], arguments[2]
-			mB.WriteString(GetModelLine(attr, tyName, true))
-			sB.WriteString(GetSchemaLine(attr, tyName))
-			rB.WriteString(GetResolverLine(attr, tyName, true))
-		} else {
-			errs.Ex(fmt.Sprintf("Error: Bad Syntax in %s", attribute))
-		}
+	var mB, sB, rB, mmB bytes.Buffer
+	if len(args) == 1 {
+		args = strings.Split(args[0], " ")
 	}
 
-	return mB.String(), sB.String(), rB.String()
+	for _, arg := range args {
+		attr, tyName, model, mandatory, list, manL := getLineAttributes(arg)
+		mB.WriteString(getModelLine(attr, tyName, model, mandatory, list, manL))
+		sB.WriteString(getSchemaLine(attr, tyName, mandatory, list, manL))
+		rB.WriteString(getResolverLine(attr, tyName, model, mandatory, list, manL))
+		mmB.WriteString(getModelMethods(attr, tyName, model, mandatory, list, manL))
+	}
+	return mB.String(), sB.String(), rB.String(), mmB.String()
 }
 
-// GetModelLine returns a line for model struct based on
-// arguments comming from goals scaffold
-func GetModelLine(attribute string, typeName string, isModel bool) string {
-	if strings.EqualFold(attribute, "id") {
-		attribute = strings.ToUpper(attribute)
+func getLineAttributes(argument string) (attribute, typeName string, isModel, isMandatory, isList, isMandatoryInList bool) {
+
+	arguments := strings.Split(argument, ":")
+	if len(arguments) == 2 {
+		attribute, typeName, isModel = arguments[0], arguments[1], false
+	} else if len(arguments) == 3 && arguments[1] == "type" {
+		attribute, typeName, isModel = arguments[0], arguments[2], true
+	} else {
+		errs.Ex(fmt.Sprintf("Error: Bad Syntax in %s", argument))
 	}
-	var isMandatoryInList bool
-	isMandatory := strings.HasSuffix(typeName, "!")
-	isList := strings.HasPrefix(typeName, "[")
+
+	isMandatory = strings.HasSuffix(typeName, "!")
+	isList = strings.HasPrefix(typeName, "[")
 	if isMandatory {
 		typeName = typeName[:len(typeName)-1]
 	}
@@ -169,6 +174,14 @@ func GetModelLine(attribute string, typeName string, isModel bool) string {
 		}
 	} else if strings.HasSuffix(typeName, "]") {
 		errs.Ex(fmt.Sprintf("Bad Syntax: %s should start list with [ before close", typeName))
+	}
+
+	return attribute, typeName, isModel, isMandatory, isList, isMandatoryInList
+}
+
+func getModelLine(attribute, typeName string, isModel, isMandatory, isList, isMandatoryInList bool) string {
+	if strings.EqualFold(attribute, "id") {
+		attribute = strings.ToUpper(attribute)
 	}
 
 	if !isModel {
@@ -211,30 +224,11 @@ func GetModelLine(attribute string, typeName string, isModel bool) string {
 	}
 }
 
-// GetSchemaLine returns a line for model schema based on
-// arguments comming from goals scaffold
-func GetSchemaLine(attribute string, typeName string) string {
-	var isMandatoryInList bool
-	isMandatory := strings.HasSuffix(typeName, "!")
-	isList := strings.HasPrefix(typeName, "[")
-	if isMandatory {
-		typeName = typeName[:len(typeName)-1]
-	}
-
-	if isList {
-		if strings.HasSuffix(typeName, "]") {
-			typeName = typeName[1 : len(typeName)-1]
-			isMandatoryInList = strings.HasSuffix(typeName, "!")
-			if isMandatoryInList {
-				typeName = typeName[:len(typeName)-1]
-			}
-		}
-	}
-
+func getSchemaLine(attribute, typeName string, isMandatory, isList, isMandatoryInList bool) string {
 	switch typeName {
 	case "boolean", "Bool", "bool":
 		typeName = "Boolean"
-	case "id":
+	case "id", "Id":
 		typeName = "ID"
 	default:
 		typeName = strings.Title(typeName)
@@ -255,29 +249,7 @@ func GetSchemaLine(attribute string, typeName string) string {
 	return fmt.Sprintf("	%s: %s\n", attribute, typeName)
 }
 
-// GetResolverLine returns a line for model resolver based on
-// arguments comming from goals scaffold
-func GetResolverLine(attribute string, typeName string, isModel bool) string {
-	if strings.EqualFold(attribute, "id") {
-		attribute = strings.ToUpper(attribute)
-	}
-	var isMandatoryInList bool
-	isMandatory := strings.HasSuffix(typeName, "!")
-	isList := strings.HasPrefix(typeName, "[")
-	if isMandatory {
-		typeName = typeName[:len(typeName)-1]
-	}
-
-	if isList {
-		if strings.HasSuffix(typeName, "]") {
-			typeName = typeName[1 : len(typeName)-1]
-			isMandatoryInList = strings.HasSuffix(typeName, "!")
-			if isMandatoryInList {
-				typeName = typeName[:len(typeName)-1]
-			}
-		}
-	}
-
+func getResolverLine(attribute, typeName string, isModel, isMandatory, isList, isMandatoryInList bool) string {
 	if !isModel {
 		switch typeName {
 		case "String", "string":
@@ -291,7 +263,7 @@ func GetResolverLine(attribute string, typeName string, isModel bool) string {
 		case "ID", "id":
 			typeName = "graphql.ID"
 		case "time", "Time":
-			typeName = "time.Time"
+			typeName = "string"
 		default:
 			typeName = fmt.Sprintf("scalar.%s", strings.Title(typeName))
 		}
@@ -365,4 +337,25 @@ func GetResolverLine(attribute string, typeName string, isModel bool) string {
 	return &%s{%sr.{{.abbreviation}}.%s}
 }
 `, strings.Title(attribute), typeName, typeName, address, strings.Title(attribute))
+}
+
+func getModelMethods(attribute, typeName string, isModel, isMandatory, isList, isMandatoryInList bool) string {
+	if !isModel {
+		switch typeName {
+		case "time", "Time":
+			data := map[string]interface{}{"attribute": attribute, "abbreviation": toAbbreviation(attribute), "Attribute": strings.Title(attribute), "type": "%s"}
+			if !isMandatory {
+				data["notMandatory"] = "*"
+			}
+			if isList {
+				data["list"] = "[]"
+				if !isMandatoryInList {
+					data["notInList"] = "*"
+				}
+			}
+			return executeTemplate(templates["getDate"], data)
+		}
+	}
+
+	return ""
 }
