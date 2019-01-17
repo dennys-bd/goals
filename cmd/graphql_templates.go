@@ -19,19 +19,19 @@ type {{.Name}} struct {
 
 	templates["scafschema"] = `package schema
 
-// {{.Name}}Types defines the graphql Types for {{.Name}}
-// TODO: Concatenate {{.Name}}Types in gqltype.Types 
-const {{.Name}}Types = ` + "`" + `
+// Your {{.Name}} model's Schema
+// declare here and
+// concatanate it on your schema.go
+
+const {{.name}}Types = ` + "`" + `
 # {{.Name}} definition type
 type {{.Name}} {
 {{.schema}}}
 ` + "`" + `
 
-// {{.Name}}Queries defines the graphql Queries for {{.Name}}
-const {{.Name}}Queries = ""
+const {{.name}}Queries = ""
 
-// {{.Name}}Mutations defines the graphql Mutations for {{.Name}}
-const {{.Name}}Mutations = ""
+const {{.name}}Mutations = ""
 `
 
 	templates["getDate"] = `

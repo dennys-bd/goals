@@ -84,7 +84,7 @@ func writeModel(name, methods, template string, project core.Project) {
 }
 
 func writeSchema(name string, template string, project core.Project) {
-	data := map[string]string{"schema": template, "Name": name}
+	data := map[string]string{"schema": template, "Name": name, "name": strings.ToLower(string(name[0])) + name[1:]}
 	schemaScript := executeTemplate(templates["scafschema"], data)
 	writeStringToFile(filepath.Join("app/schema", fmt.Sprintf("%s_schema.go", strings.ToLower(name))), schemaScript)
 }
@@ -225,65 +225,81 @@ func getModelLine(attribute, typeName string, isModel, isMandatory, isList, isMa
 }
 
 func getSchemaLine(attribute, typeName string, isMandatory, isList, isMandatoryInList bool) string {
+	typeReturn := typeName
 	switch typeName {
 	case "boolean", "Bool", "bool":
-		typeName = "Boolean"
+		typeReturn = "Boolean"
 	case "id", "Id":
-		typeName = "ID"
+		typeReturn = "ID"
+	case "time", "Time":
+		typeReturn = "String"
+		typeName = "time"
 	default:
-		typeName = strings.Title(typeName)
+		typeReturn = strings.Title(typeReturn)
 	}
 
 	if isList {
 		if isMandatoryInList {
-			typeName = "[" + typeName + "!]"
+			typeReturn = "[" + typeReturn + "!]"
 		} else {
-			typeName = "[" + typeName + "]"
+			typeReturn = "[" + typeReturn + "]"
 		}
 	}
 
 	if isMandatory {
-		typeName += "!"
+		typeReturn += "!"
 	}
 
-	return fmt.Sprintf("	%s: %s\n", attribute, typeName)
+	if typeName != "time" {
+		return fmt.Sprintf("	%s: %s\n", attribute, typeReturn)
+	}
+	return fmt.Sprintf("	%s(format: String): %s\n", attribute, typeReturn)
 }
 
 func getResolverLine(attribute, typeName string, isModel, isMandatory, isList, isMandatoryInList bool) string {
 	if !isModel {
+		var typeReturn string
 		switch typeName {
 		case "String", "string":
-			typeName = "string"
+			typeReturn = "string"
 		case "Int", "int":
-			typeName = "int32"
+			typeReturn = "int32"
 		case "Float", "float":
-			typeName = "float64"
+			typeReturn = "float64"
 		case "Boolean", "boolean", "Bool", "bool":
-			typeName = "bool"
+			typeReturn = "bool"
 		case "ID", "id":
-			typeName = "graphql.ID"
+			typeReturn = "graphql.ID"
 		case "time", "Time":
-			typeName = "string"
+			typeReturn = "string"
+			typeName = "time"
 		default:
-			typeName = fmt.Sprintf("scalar.%s", strings.Title(typeName))
+			typeReturn = fmt.Sprintf("scalar.%s", strings.Title(typeName))
 		}
 
 		if isList {
 			if isMandatoryInList {
-				typeName = "[]" + typeName
+				typeReturn = "[]" + typeReturn
 			} else {
-				typeName = "[]*" + typeName
+				typeReturn = "[]*" + typeReturn
 			}
 		}
 
 		if !isMandatory {
-			typeName = "*" + typeName
+			typeReturn = "*" + typeReturn
 		}
 
-		return fmt.Sprintf(`func (r *{{.resolver}}) %s() %s {
+		if typeName != "time" {
+			return fmt.Sprintf(`func (r *{{.resolver}}) %s() %s {
 	return r.{{.abbreviation}}.%s
 }
-`, strings.Title(attribute), typeName, strings.Title(attribute))
+`, strings.Title(attribute), typeReturn, strings.Title(attribute))
+		}
+
+		return fmt.Sprintf(`func (r *{{.resolver}}) %s(args struct{ Format *string }) %s {
+	return r.{{.abbreviation}}.Get%s(args.Format)
+}
+`, strings.Title(attribute), typeReturn, strings.Title(attribute))
 	}
 
 	typeName = fmt.Sprintf("%s%sResolver", strings.ToLower(string(typeName[0])), typeName[1:])
