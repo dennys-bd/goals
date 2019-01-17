@@ -42,10 +42,11 @@ func ({{.abbreviation}} model_name) Get{{.Attribute}}(format *string) {{.notMand
 	}
 	{{end}}dates := make([]{{.notInList}}string, len({{.notMandatory}}{{.abbreviation}}.{{.Attribute}}))
 	for i := range dates {
-		{{if .notInList}}dates[i] = *(getDateInFormat({{if .notInList}}&{{end}}{{.abbreviation}}.{{.Attribute}}[i])){{else}}dates[i] = getDateInFormat({{if .notInList}}&{{end}}{{.abbreviation}}.{{.Attribute}}[i]){{end}}
-	}
+		{{if .notInList}}dates[i] = getDateInFormat({{if .notMandatory}}(*{{.abbreviation}}.{{.Attribute}}){{else}}{{.abbreviation}}.{{.Attribute}}{{end}}[i], format)
+	}{{else}}dates[i] = *(getDateInFormat(&{{if .notMandatory}}(*{{.abbreviation}}.{{.Attribute}}){{else}}{{.abbreviation}}.{{.Attribute}}{{end}}[i], format))
+	}{{end}}
 	return {{if .notMandatory}}&{{end}}dates
-	{{else}}{{if .notMandatory}}return getDateInFormat({{.abbreviation}}.{{.Attribute}}, format){{else}}return *(getDateInFormat(&{{.abbreviation}}.{{.Attribute}}, format)){{end}}{{end}}
-}
+}{{else}}{{if .notMandatory}}return getDateInFormat({{.abbreviation}}.{{.Attribute}}, format){{else}}return *(getDateInFormat(&{{.abbreviation}}.{{.Attribute}}, format)){{end}}
+}{{end}}
 `
 }
