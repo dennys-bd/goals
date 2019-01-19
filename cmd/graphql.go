@@ -12,6 +12,7 @@ import (
 )
 
 var resolver string
+var json bool
 
 var gqlCmd = &cobra.Command{
 	Use:     "graphql Name 'atribute:type!'",
@@ -43,6 +44,7 @@ func createFiles(name string, args []string, project core.Project) {
 
 func init() {
 	gqlCmd.Flags().StringVarP(&resolver, "resolver", "r", "", "Name to the resolver variable of your model")
+	gqlCmd.Flags().BoolVar(&json, "json", false, "Use it if you want to generate the json attributes of your model")
 }
 
 func writeModel(name, methods, template string, project core.Project) {
