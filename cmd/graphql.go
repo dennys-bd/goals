@@ -217,13 +217,19 @@ func getModelLine(attribute, typeName string, isModel, isMandatory, isList, isMa
 		typeName = "*" + typeName
 	}
 
-	if isModel {
-		return fmt.Sprintf("	%s %s `json:\"-\"`\n", strings.Title(attribute), strings.Title(typeName))
-	} else if typeName == "*bool" || typeName == "bool" {
-		return fmt.Sprintf("	%s %s `json:\"%s\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
-	} else {
-		return fmt.Sprintf("	%s %s `json:\"%s,omitempty\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
+	if json {
+		if isModel {
+			return fmt.Sprintf("	%s %s `json:\"-\"`\n", strings.Title(attribute), strings.Title(typeName))
+		} else if typeName == "*bool" || typeName == "bool" {
+			return fmt.Sprintf("	%s %s `json:\"%s\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
+		} else {
+			return fmt.Sprintf("	%s %s `json:\"%s,omitempty\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
+		}
 	}
+	if isModel {
+		return fmt.Sprintf("	%s %s", strings.Title(attribute), strings.Title(typeName))
+	}
+	return fmt.Sprintf("	%s %s", strings.Title(attribute), typeName)
 }
 
 func getSchemaLine(attribute, typeName string, isMandatory, isList, isMandatoryInList bool) string {

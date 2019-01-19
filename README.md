@@ -40,7 +40,6 @@ You can set your `GOALS_ENV` environment variable with the flag `--env` or `-e`
 * [ ] accept params to resolver on scaffolding model
 * [ ] Ennable cors options
 * [ ] Choose to serve graphilQL on CoreOpts
-* [ ] Flag Json in scafold graphql (To put json atributtes)
 * [ ] Create flags --no-model, --no-resolver, --no-schema on goals s graphql
 * [ ] database integration
 * [ ] lib/schema should contains: Model Name, Resolver name, Type of retrival
