@@ -62,7 +62,7 @@ func RegisterPrivateSchema(endpoint string, schema Schema, resolver graphql.Priv
 // User It after registering yours schemas.
 func Server(opts CoreOpts) {
 	for _, reg := range registers {
-		if opts.graphiql || os.Getenv("GOALS_ENV") != "production" {
+		if os.Getenv("GOALS_ENV") == "development" || opts.graphiql {
 			innerPage := fmt.Sprintf(page, reg.endpoint)
 			http.Handle(reg.endpoint+"/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte(innerPage))

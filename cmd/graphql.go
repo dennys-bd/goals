@@ -12,7 +12,7 @@ import (
 )
 
 var resolver string
-var json bool
+var json, noGqllModel, noGqlSchema, noGqlResolver bool
 
 var gqlCmd = &cobra.Command{
 	Use:     "graphql Name 'atribute:type!'",
@@ -36,15 +36,23 @@ func createFiles(name string, args []string, project core.Project) {
 	gqlTemplates()
 	model, schema, resolver, modelMethods := getTemplates(args)
 	name = strings.Title(name)
-	writeModel(name, modelMethods, model, project)
-	writeSchema(name, schema, project)
-	writeResolver(name, resolver, project)
-
+	if !noGqllModel {
+		writeModel(name, modelMethods, model, project)
+	}
+	if !noGqlSchema {
+		writeSchema(name, schema, project)
+	}
+	if !noGqlResolver {
+		writeResolver(name, resolver, project)
+	}
 }
 
 func init() {
 	gqlCmd.Flags().StringVarP(&resolver, "resolver", "r", "", "Name to the resolver variable of your model")
 	gqlCmd.Flags().BoolVar(&json, "json", false, "Use it if you want to generate the json attributes of your model")
+	gqlCmd.Flags().BoolVar(&noGqllModel, "no-model", false, "Use this flag if you want to graphql command to don't create the model")
+	gqlCmd.Flags().BoolVar(&noGqlSchema, "no-schema", false, "Use this flag if you want to graphql command to don't create the schema")
+	gqlCmd.Flags().BoolVar(&noGqlResolver, "no-resolver", false, "Use this flag if you want to graphql command to don't create the resolver")
 }
 
 func writeModel(name, methods, template string, project core.Project) {
