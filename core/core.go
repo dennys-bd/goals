@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dennys-bd/goals/auth"
@@ -17,6 +18,7 @@ import (
 
 var registers []register
 
+// Schema definition
 type Schema struct {
 	name   string
 	schema string
@@ -27,12 +29,6 @@ type register struct {
 	schema   Schema
 	resolver interface{}
 	opt      []graphql.SchemaOpt
-}
-
-type CoreOpts struct {
-	port     string
-	verbose  bool
-	graphiql bool
 }
 
 // RegisterSchema register your schema to a resolver in an endpoint
@@ -60,9 +56,12 @@ func RegisterPrivateSchema(endpoint string, schema Schema, resolver graphql.Priv
 
 // Server is user to run your goals application,
 // User It after registering yours schemas.
-func Server(opts CoreOpts) {
+func Server() {
+	project, _ := recreateProjectFromGoals()
+	getRunServerFlags(&project)
+
 	for _, reg := range registers {
-		if os.Getenv("GOALS_ENV") == "development" || opts.graphiql {
+		if os.Getenv("GOALS_ENV") == "development" || project.Config.Graphiql {
 			innerPage := fmt.Sprintf(page, reg.endpoint)
 			http.Handle(reg.endpoint+"/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte(innerPage))
@@ -76,23 +75,40 @@ func Server(opts CoreOpts) {
 			http.Handle("/graphql"+reg.endpoint, &relay.Handler{Schema: schema})
 		}
 	}
-	go printServers(opts)
-	log.Fatal(http.ListenAndServe(":"+opts.port, nil))
+	go printServers(project.Config)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", project.Config.Port), nil))
 }
 
-func GetOpts() CoreOpts {
-	arg := os.Args[1]
-	arg2, _ := strconv.ParseBool(os.Args[2])
-	return CoreOpts{port: arg, verbose: arg2}
+func getRunServerFlags(p *Project) {
+	if len(os.Args) > 1 {
+		for _, arg := range os.Args {
+			if arg == "verbose" {
+				p.Config.verbose = true
+			} else if strings.HasPrefix(arg, "PORT=") {
+				s := strings.Split(arg, "=")
+				if len(s) == 1 {
+					errs.Ex("You are trying to start with incorrect port configuration.")
+				}
+				if port, err := strconv.Atoi(s[1]); err != nil {
+					errs.Ex(fmt.Sprintf("Your port should be a number. We received: %s", s[1]))
+				} else {
+					p.Config.Port = port
+				}
+			}
+		}
+	}
 }
 
-func printServers(opts CoreOpts) {
+func printServers(config config) {
 	time.Sleep(500 * time.Millisecond)
 	fmt.Printf("-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-\n")
 	for _, reg := range registers {
-		fmt.Printf("%s is registered at: http://localhost:%s/graphql%s\nWith the resolver: %s\nYou can visit it's GraphiQL page on http://localhost:%s%s\n",
-			reg.schema.name, opts.port, reg.endpoint, reflect.TypeOf(reg.resolver).Elem(), opts.port, reg.endpoint)
-		if opts.verbose {
+		fmt.Printf("%s is registered at: http://localhost:%d/graphql%s\nWith the resolver: %s\n",
+			reg.schema.name, config.Port, reg.endpoint, reflect.TypeOf(reg.resolver).Elem())
+		if os.Getenv("GOALS_ENV") == "development" || config.Graphiql {
+			fmt.Printf("You can visit it's GraphiQL page on http://localhost:%d%s\n", config.Port, reg.endpoint)
+		}
+		if config.verbose {
 			fmt.Printf("Check the schema:\n`%s`\n", reg.schema.schema)
 		}
 		fmt.Printf("-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-=x=-\n")

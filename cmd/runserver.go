@@ -1,9 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
 
 	"github.com/dennys-bd/goals/core"
 	"github.com/spf13/cobra"
@@ -33,24 +33,27 @@ func init() {
 }
 
 func runserver(project core.Project) {
-
-	p := loadPort(project)
 	loadDotEnv(project)
+	p := loadPort(project)
+	v := ""
+	if verbose {
+		v = "verbose"
+	}
 
-	cmd := exec.Command("go", "run", "server.go", p, strconv.FormatBool(verbose))
+	cmd := exec.Command("go", "run", "server.go", p, v)
 	cmd.Dir = project.AbsPath
 
 	runCmd(cmd)
 }
 
 func loadPort(project core.Project) string {
-	p := strconv.Itoa(project.Config.Port)
+	p := ""
 
 	if envPort {
-		p = os.Getenv("PORT")
+		p = fmt.Sprintf("PORT=%s", os.Getenv("PORT"))
 	}
 	if port != "" {
-		p = port
+		p = fmt.Sprintf("PORT=%s", port)
 	}
 
 	return p

@@ -2,7 +2,13 @@ package core
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
+
+	"github.com/BurntSushi/toml"
+	errs "github.com/dennys-bd/goals/shortcuts/errors"
+	"github.com/rs/cors"
 )
 
 // Project model
@@ -12,12 +18,13 @@ type Project struct {
 	Name       string
 	GoVersion  string `toml:"go_version"`
 	AppMode    string `toml:"app_mode"`
-	Config     Config `toml:"config"`
+	Config     config `toml:"config"`
 }
 
-// Config model
-type Config struct {
-	Port int `toml:"port"`
+type config struct {
+	Port     int  `toml:"port"`
+	Graphiql bool `toml:"graphilql"`
+	verbose  bool `toml:"-"`
 }
 
 // CreateGoalsToml create the file Goals.Toml
@@ -83,4 +90,32 @@ func (p Project) ConfigPath() string {
 
 func (p Project) LoadDotEnv() {
 	loadDotEnv(p)
+}
+
+type goalsToml struct {
+	Project Project
+	Cors    *cors.Options
+}
+
+func recreateProjectFromGoals() (Project, *cors.Options) {
+	wd, err := os.Getwd()
+	errs.CheckEx(err)
+
+	data, err := ioutil.ReadFile(filepath.Join(wd, "config/Goals.toml"))
+	if err != nil {
+		errs.Ex("This is not a goals project")
+	}
+
+	p, c, err := recreateProject(string(data))
+	errs.CheckEx(err)
+
+	p.AbsPath = wd
+
+	return p, c
+}
+
+func recreateProject(projectString string) (Project, *cors.Options, error) {
+	var m goalsToml
+	_, err := toml.Decode(projectString, &m)
+	return m.Project, m.Cors, err
 }
