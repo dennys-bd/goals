@@ -12,7 +12,7 @@ import (
 )
 
 var resolver string
-var json, noGqllModel, noGqlSchema, noGqlResolver bool
+var json, details, noGqllModel, noGqlSchema, noGqlResolver bool
 
 var gqlCmd = &cobra.Command{
 	Use:     "graphql Name 'atribute:type!'",
@@ -22,18 +22,20 @@ var gqlCmd = &cobra.Command{
 based on a model's description will create
 it's structure, nammed: Model, Schema and Resolver.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 2 {
-			errs.Ex("Wrong arguments you should use a minimum of 2 arguments")
+
+		println("len of args: ", len(args))
+		if len(args) < 1 || (len(args) < 2 && !details) {
+			errs.Ex("Wrong arguments you should insert at least the name of your model, and it's structure if flag details is not setted")
 		}
 
 		project := recreateProjectFromGoals()
-
+		gqlTemplates()
 		createFiles(args[0], args[1:], project)
+
 	},
 }
 
 func createFiles(name string, args []string, project core.Project) {
-	gqlTemplates()
 	model, schema, resolver, modelMethods := getTemplates(args)
 	name = strings.Title(name)
 	if !noGqllModel {
@@ -53,6 +55,7 @@ func init() {
 	gqlCmd.Flags().BoolVar(&noGqllModel, "no-model", false, "Use this flag if you want to graphql command to don't create the model")
 	gqlCmd.Flags().BoolVar(&noGqlSchema, "no-schema", false, "Use this flag if you want to graphql command to don't create the schema")
 	gqlCmd.Flags().BoolVar(&noGqlResolver, "no-resolver", false, "Use this flag if you want to graphql command to don't create the resolver")
+	gqlCmd.Flags().BoolVarP(&details, "details", "d", false, "Details will give the opportunity create your model line by line")
 }
 
 func writeModel(name, methods, template string, project core.Project) {
@@ -141,6 +144,15 @@ func writeResolver(name string, template string, project core.Project) {
 func getTemplates(args []string) (model, schema, resolver, modelMethods string) {
 
 	var mB, sB, rB, mmB bytes.Buffer
+	if details {
+		// reader := bufio.NewReader(os.Stdin)
+		// fmt.Printf("Create your model (%s) based on a GraphQL's structure:\n\n", name)
+		for {
+			fmt.Printf("\rEnter your model's next attribute")
+			// text, _ := reader.ReadString('\n')
+
+		}
+	}
 	if len(args) == 1 {
 		args = strings.Split(args[0], " ")
 	}
@@ -390,4 +402,8 @@ func getModelMethods(attribute, typeName string, isModel, isMandatory, isList, i
 	}
 
 	return ""
+}
+
+func separateLine(arg string) {
+	// r := regexp.MustCompile(`(?P<attribute>[a-z][a-zA-Z0-9]*)(?P<params>\([[a-z][a-zA-Z0-9]*\: ?[a-zA-Z0-9]+!?\)]*)?\: ?(?P<result>([a-z][a-zA-Z0-9]*!?)|(\[[a-z][a-zA-Z0-9]*!?\]!?))`)
 }

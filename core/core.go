@@ -57,7 +57,12 @@ func RegisterPrivateSchema(endpoint string, schema Schema, resolver graphql.Priv
 // Server is user to run your goals application,
 // User It after registering yours schemas.
 func Server() {
-	project, _ := recreateProjectFromGoals()
+	project, cors := recreateProjectFromGoals()
+	if cors != nil {
+		println("entrou")
+		fmt.Printf("%v\n", cors.AllowedHeaders)
+		fmt.Printf("%v\n", cors.AllowCredentials)
+	}
 	getRunServerFlags(&project)
 
 	for _, reg := range registers {
