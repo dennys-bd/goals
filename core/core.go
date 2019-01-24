@@ -14,6 +14,7 @@ import (
 	"github.com/dennys-bd/goals/graphql"
 	"github.com/dennys-bd/goals/graphql/relay"
 	errs "github.com/dennys-bd/goals/shortcuts/errors"
+	"github.com/rs/cors"
 )
 
 var registers []register
@@ -57,12 +58,7 @@ func RegisterPrivateSchema(endpoint string, schema Schema, resolver graphql.Priv
 // Server is user to run your goals application,
 // User It after registering yours schemas.
 func Server() {
-	project, cors := recreateProjectFromGoals()
-	if cors != nil {
-		println("entrou")
-		fmt.Printf("%v\n", cors.AllowedHeaders)
-		fmt.Printf("%v\n", cors.AllowCredentials)
-	}
+	project, corsOptions := recreateProjectFromGoals()
 	getRunServerFlags(&project)
 
 	for _, reg := range registers {
@@ -74,10 +70,19 @@ func Server() {
 		}
 
 		schema := graphql.MustParseSchema(reg.schema.schema, reg.resolver)
-		if res, ok := reg.resolver.(graphql.PrivateResolver); ok {
-			http.Handle("/graphql"+reg.endpoint, auth.InjectAuthToContext(&relay.Handler{Schema: schema}, res.GetAuthHeaders()...))
+		if corsOptions != nil {
+			c := cors.New(*corsOptions)
+			if res, ok := reg.resolver.(graphql.PrivateResolver); ok {
+				http.Handle("/graphql"+reg.endpoint, c.Handler(auth.InjectAuthToContext(&relay.Handler{Schema: schema}, res.GetAuthHeaders()...)))
+			} else {
+				http.Handle("/graphql"+reg.endpoint, c.Handler(&relay.Handler{Schema: schema}))
+			}
 		} else {
-			http.Handle("/graphql"+reg.endpoint, &relay.Handler{Schema: schema})
+			if res, ok := reg.resolver.(graphql.PrivateResolver); ok {
+				http.Handle("/graphql"+reg.endpoint, auth.InjectAuthToContext(&relay.Handler{Schema: schema}, res.GetAuthHeaders()...))
+			} else {
+				http.Handle("/graphql"+reg.endpoint, &relay.Handler{Schema: schema})
+			}
 		}
 	}
 	go printServers(project.Config)

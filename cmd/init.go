@@ -106,17 +106,31 @@ func createStructure(project *core.Project) {
 	serverData := map[string]interface{}{"importpath": project.ImportPath}
 	serverScript := executeTemplate(templates["server"], serverData)
 
+	goalsData := map[string]interface{}{"name": project.Name, "importpath": project.ImportPath, "goversion": project.GoVersion, "appmode": project.AppMode}
+	goalsScript := executeTemplate(templates["goalstoml"], goalsData)
+
 	writeStringToFile(filepath.Join(project.ResolverPath(), "resolver.go"), resScript)
 	writeStringToFile(filepath.Join(project.SchemaPath(), "schema.go"), schScript)
 	writeStringToFile(filepath.Join(project.AbsPath, "server.go"), serverScript)
+	writeStringToFile(filepath.Join(project.ConfigPath(), "Goals.toml"), goalsScript)
 	writeStringToFile(filepath.Join(project.AbsPath, ".gitignore"), templates["git"])
-	writeStringToFile(filepath.Join(project.ConfigPath(), "Goals.toml"), project.CreateGoalsToml())
 	writeStringToFile(filepath.Join(project.LibPath(), "consts.go"), templates["consts"])
 	writeStringToFile(filepath.Join(project.ScalarPath(), "scalar.go"), templates["scalar"])
 	writeStringToFile(filepath.Join(project.ScalarPath(), "json.go"), templates["json"])
 	writeStringToFile(filepath.Join(project.ModelPath(), "helper.go"), templates["modelHelper"])
 	writeStringToFile(filepath.Join(project.ResolverPath(), "helper.go"), templates["resolverHelper"])
 }
+
+// func (p Project) CreateGoalsToml() string {
+// 	return fmt.Sprintf(`[project]
+// 	name = "%s"
+// 	import_path = "%s"
+// 	go_version = "%s"
+// 	app_mode = "%s"
+
+// [project.config]
+// 	port = 8080`, p.Name, p.ImportPath, p.GoVersion, p.AppMode)
+// }
 
 func downloadDependencies(project *core.Project) {
 	cmd := exec.Command("dep", "ensure")

@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -25,19 +24,6 @@ type config struct {
 	Port     int  `toml:"port"`
 	Graphiql bool `toml:"graphilql"`
 	verbose  bool `toml:"-"`
-}
-
-// CreateGoalsToml create the file Goals.Toml
-// in which we save some of the project attributes
-func (p Project) CreateGoalsToml() string {
-	return fmt.Sprintf(`[project]
-	name = "%s"
-	import_path = "%s"
-	go_version = "%s"
-	app_mode = "%s"
-	
-[project.config]
-	port = 8080`, p.Name, p.ImportPath, p.GoVersion, p.AppMode)
 }
 
 //ResolverPath is the path to package resolver

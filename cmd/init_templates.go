@@ -280,4 +280,21 @@ scalar Time
 scalar Json
 ` + "`" + `
 `
+
+	templates["goalstoml"] = `[project]
+	name = {{.name}}
+	import_path = {{.importpath}}
+	go_version = {{.goversion}}
+	app_mode = {{.appmode}}
+	
+[project.config]
+	port = 8080
+	graphilql = false
+	
+[cors]
+	AllowedOrigins = ["*"]
+	AllowedHeaders = ["Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization"]
+	AllowedMethods = ["POST", "GET", "OPTIONS", "PUT", "DELETE"]
+	AllowCredentials = true
+`
 }
