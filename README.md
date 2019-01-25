@@ -58,7 +58,6 @@ Flags:
 * [x] create runserver command
 * [x] environment separation ready (dotEnv)
 * [ ] accept params to resolver on scaffolding model
-* [ ] Ennable cors options
 * [ ] database integration:
   * [ ] save model directive (databases or gateway)
   * [ ] automagic model basics attributes (id, created_at, updated_at)

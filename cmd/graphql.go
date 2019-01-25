@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/dennys-bd/goals/core"
@@ -22,8 +25,6 @@ var gqlCmd = &cobra.Command{
 based on a model's description will create
 it's structure, nammed: Model, Schema and Resolver.`,
 	Run: func(cmd *cobra.Command, args []string) {
-
-		println("len of args: ", len(args))
 		if len(args) < 1 || (len(args) < 2 && !details) {
 			errs.Ex("Wrong arguments you should insert at least the name of your model, and it's structure if flag details is not setted")
 		}
@@ -31,7 +32,6 @@ it's structure, nammed: Model, Schema and Resolver.`,
 		project := recreateProjectFromGoals()
 		gqlTemplates()
 		createFiles(args[0], args[1:], project)
-
 	},
 }
 
@@ -145,12 +145,19 @@ func getTemplates(args []string) (model, schema, resolver, modelMethods string) 
 
 	var mB, sB, rB, mmB bytes.Buffer
 	if details {
-		// reader := bufio.NewReader(os.Stdin)
-		// fmt.Printf("Create your model (%s) based on a GraphQL's structure:\n\n", name)
+		r := bufio.NewReader(os.Stdin)
+		fmt.Printf("Create your model (%s) based on a GraphQL's structure:\n\n", "bla")
 		for {
-			fmt.Printf("\rEnter your model's next attribute")
-			// text, _ := reader.ReadString('\n')
-
+			fmt.Printf("\rEnter your model's next attribute ")
+			text, _ := r.ReadString('\n')
+			if strings.TrimSpace(text) == "" {
+				break
+			}
+			separateLine(text)
+			attr, tyName, model, mandatory, list, manL := getLineAttributes(text)
+			fmt.Printf("ModelLine: %v\n", getModelLine(attr, tyName, model, mandatory, list, manL))
+			fmt.Printf("SchemaLine: %v\n", getSchemaLine(attr, tyName, mandatory, list, manL))
+			fmt.Printf("ResolverLine: %v\n", getResolverLine(attr, tyName, model, mandatory, list, manL))
 		}
 	}
 	if len(args) == 1 {
@@ -404,6 +411,15 @@ func getModelMethods(attribute, typeName string, isModel, isMandatory, isList, i
 	return ""
 }
 
-func separateLine(arg string) {
-	// r := regexp.MustCompile(`(?P<attribute>[a-z][a-zA-Z0-9]*)(?P<params>\([[a-z][a-zA-Z0-9]*\: ?[a-zA-Z0-9]+!?\)]*)?\: ?(?P<result>([a-z][a-zA-Z0-9]*!?)|(\[[a-z][a-zA-Z0-9]*!?\]!?))`)
+func separateLine(line string) map[string]string {
+	r := regexp.MustCompile(`(?P<attribute>[a-z][a-zA-Z0-9]*)(?P<params>\([[a-z][a-zA-Z0-9]*\: ?[a-zA-Z0-9]+!?\)]*)?\: ?(?P<result>([a-zA-Z0-9]*!?)|(\[a-zA-Z0-9]*!?\]!?))`)
+
+	match := r.FindStringSubmatch(line)
+	result := make(map[string]string)
+	for i, name := range r.SubexpNames() {
+		if i != 0 && name != "" && i < len(match) {
+			result[name] = match[i]
+		}
+	}
+	return result
 }
