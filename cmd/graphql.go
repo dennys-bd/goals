@@ -15,7 +15,19 @@ import (
 )
 
 var resolver string
-var json, details, noGqllModel, noGqlSchema, noGqlResolver bool
+var json, gqlVerbose, noGqllModel, noGqlSchema, noGqlResolver bool
+
+type attribute struct {
+	name              string
+	typeName          string
+	isModel           bool
+	isMandatory       bool
+	isList            bool
+	isMandatoryInList bool
+	params            []attribute
+}
+
+// attribute, typeName string, isModel, isMandatory, isList, isMandatoryInList bool
 
 var gqlCmd = &cobra.Command{
 	Use:     "graphql Name 'atribute:type!'",
@@ -25,8 +37,8 @@ var gqlCmd = &cobra.Command{
 based on a model's description will create
 it's structure, nammed: Model, Schema and Resolver.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 || (len(args) < 2 && !details) {
-			errs.Ex("Wrong arguments you should insert at least the name of your model, and it's structure if flag details is not setted")
+		if len(args) < 1 || (len(args) < 2 && !gqlVerbose) {
+			errs.Ex("Wrong arguments you should insert at least the name of your model, and it's structure if flag verbose is not setted")
 		}
 
 		project := recreateProjectFromGoals()
@@ -55,7 +67,7 @@ func init() {
 	gqlCmd.Flags().BoolVar(&noGqllModel, "no-model", false, "Use this flag if you want to graphql command to don't create the model")
 	gqlCmd.Flags().BoolVar(&noGqlSchema, "no-schema", false, "Use this flag if you want to graphql command to don't create the schema")
 	gqlCmd.Flags().BoolVar(&noGqlResolver, "no-resolver", false, "Use this flag if you want to graphql command to don't create the resolver")
-	gqlCmd.Flags().BoolVarP(&details, "details", "d", false, "Details will give the opportunity create your model line by line")
+	gqlCmd.Flags().BoolVarP(&gqlVerbose, "verbose", "v", false, "Verbose will give the opportunity create your model line by line")
 }
 
 func writeModel(name, methods, template string, project core.Project) {
@@ -70,7 +82,7 @@ func writeModel(name, methods, template string, project core.Project) {
 		countImports++
 	}
 	if strings.Index(template, "time.Time") > -1 {
-		importpath = "	\"time\"\n\n"
+		importpath = "	\"time\"\n"
 		countImports++
 	}
 
@@ -116,12 +128,12 @@ func writeResolver(name string, template string, project core.Project) {
 	if hasTime {
 		importpath = "	\"time\"\n\n"
 	}
-	importpath = fmt.Sprintf("%s	\"%s/app/model\"\n", importpath, project.ImportPath)
+	importpath = fmt.Sprintf("%s \"%s/app/model\"\n", importpath, project.ImportPath)
 	if hasScalar {
 		importpath += fmt.Sprintf("	\"%v/app/scalar\"\n", project.ImportPath)
 	}
 	if hasGraphql {
-		importpath += "	graphql \"github.com/graph-gophers/graphql-go\"\n"
+		importpath += "	\"github.com/dennys-bd/goals/graphql\"\n"
 	}
 
 	if hasTime || hasScalar || hasGraphql {
@@ -144,45 +156,78 @@ func writeResolver(name string, template string, project core.Project) {
 func getTemplates(args []string) (model, schema, resolver, modelMethods string) {
 
 	var mB, sB, rB, mmB bytes.Buffer
-	if details {
+	if gqlVerbose {
 		r := bufio.NewReader(os.Stdin)
 		fmt.Printf("Create your model (%s) based on a GraphQL's structure:\n\n", "bla")
 		for {
-			fmt.Printf("\rEnter your model's next attribute ")
+			fmt.Printf("Enter your model's next attribute, or just press enter to finish creation. ")
 			text, _ := r.ReadString('\n')
 			if strings.TrimSpace(text) == "" {
 				break
 			}
 			separateLine(text)
-			attr, tyName, model, mandatory, list, manL := getLineAttributes(text)
-			fmt.Printf("ModelLine: %v\n", getModelLine(attr, tyName, model, mandatory, list, manL))
-			fmt.Printf("SchemaLine: %v\n", getSchemaLine(attr, tyName, mandatory, list, manL))
-			fmt.Printf("ResolverLine: %v\n", getResolverLine(attr, tyName, model, mandatory, list, manL))
-		}
-	}
-	if len(args) == 1 {
-		args = strings.Split(args[0], " ")
-	}
+			attr := getLineAttributes(text)
+			ml := getModelLine(attr)
+			mml := getModelMethods(attr)
+			sl := getSchemaLine(attr)
+			rl := getResolverLine(attr)
 
-	for _, arg := range args {
-		attr, tyName, model, mandatory, list, manL := getLineAttributes(arg)
-		mB.WriteString(getModelLine(attr, tyName, model, mandatory, list, manL))
-		sB.WriteString(getSchemaLine(attr, tyName, mandatory, list, manL))
-		rB.WriteString(getResolverLine(attr, tyName, model, mandatory, list, manL))
-		mmB.WriteString(getModelMethods(attr, tyName, model, mandatory, list, manL))
+			fmt.Printf("ModelLine: %s", ml)
+			fmt.Printf("ModelMethods: %s\n", strings.Trim(mml, "\n"))
+			fmt.Printf("SchemaLine: %s\n", strings.Trim(sl, "\n"))
+			fmt.Printf("ResolverLine: %s\n", rl)
+
+			print("Is it correct? (Y/n) ")
+			ru, _, _ := r.ReadRune()
+			if string(ru) == "y" || string(ru) == "Y" {
+				mB.WriteString(ml)
+				mmB.WriteString(mml)
+				sB.WriteString(sl)
+				rB.WriteString(rl)
+			}
+			println("")
+			r.Reset(os.Stdin)
+		}
+	} else {
+		if len(args) == 1 {
+			args = strings.Split(args[0], " ")
+		}
+
+		for _, arg := range args {
+			attr := getLineAttributes(arg)
+			mB.WriteString(getModelLine(attr))
+			sB.WriteString(getSchemaLine(attr))
+			rB.WriteString(getResolverLine(attr))
+			mmB.WriteString(getModelMethods(attr))
+		}
 	}
 	return mB.String(), sB.String(), rB.String(), mmB.String()
 }
 
-func getLineAttributes(argument string) (attribute, typeName string, isModel, isMandatory, isList, isMandatoryInList bool) {
+func getLineAttributes(argument string) attribute {
+	var name, typeName string
+	var isModel, isMandatory, isList, isMandatoryInList bool
+	var params []attribute
+
+	opening := strings.Index(argument, "(")
+	if opening > -1 {
+		closing := strings.Index(argument, ")")
+		p := argument[opening+1 : closing]
+		argument = argument[:opening] + argument[closing+1:]
+		pl := strings.Split(p, ",")
+		for _, l := range pl {
+			a := getLineAttributes(l)
+			params = append(params, a)
+		}
+	}
 
 	arguments := strings.Split(argument, ":")
 	if len(arguments) == 2 {
-		attribute, typeName, isModel = arguments[0], arguments[1], false
+		name, typeName, isModel = strings.TrimSpace(arguments[0]), strings.TrimSpace(arguments[1]), false
 	} else if len(arguments) == 3 && arguments[1] == "type" {
-		attribute, typeName, isModel = arguments[0], arguments[2], true
+		name, typeName, isModel = strings.TrimSpace(arguments[0]), strings.TrimSpace(arguments[2]), true
 	} else {
-		errs.Ex(fmt.Sprintf("Error: Bad Syntax in %s", argument))
+		errs.Ex(fmt.Sprintf("Bad Syntax in %s", argument))
 	}
 
 	isMandatory = strings.HasSuffix(typeName, "!")
@@ -199,102 +244,124 @@ func getLineAttributes(argument string) (attribute, typeName string, isModel, is
 				typeName = typeName[:len(typeName)-1]
 			}
 		} else {
-			errs.Ex(fmt.Sprintf("Bad Syntax: %s should close list with ]", typeName))
+			errs.Ex(fmt.Sprintf("Bad Syntax, %s should close list with ]", typeName))
 		}
 	} else if strings.HasSuffix(typeName, "]") {
-		errs.Ex(fmt.Sprintf("Bad Syntax: %s should start list with [ before close", typeName))
+		errs.Ex(fmt.Sprintf("Bad Syntax, %s should start list with [ before close", typeName))
 	}
 
-	return attribute, typeName, isModel, isMandatory, isList, isMandatoryInList
+	a := attribute{
+		name:              name,
+		typeName:          typeName,
+		isModel:           isModel,
+		isMandatory:       isMandatory,
+		isList:            isList,
+		isMandatoryInList: isMandatoryInList,
+		params:            params,
+	}
+	return a
 }
 
-func getModelLine(attribute, typeName string, isModel, isMandatory, isList, isMandatoryInList bool) string {
-	if strings.EqualFold(attribute, "id") {
-		attribute = strings.ToUpper(attribute)
+func getModelLine(a attribute) string {
+	if strings.EqualFold(a.name, "id") {
+		a.name = strings.ToUpper(a.name)
 	}
 
-	if !isModel {
-		switch typeName {
+	if !a.isModel {
+		switch a.typeName {
 		case "String", "string":
-			typeName = "string"
+			a.typeName = "string"
 		case "Int", "int":
-			typeName = "int32"
+			a.typeName = "int32"
 		case "Float", "float":
-			typeName = "float64"
+			a.typeName = "float64"
 		case "Boolean", "boolean", "Bool", "bool":
-			typeName = "bool"
+			a.typeName = "bool"
 		case "ID", "id":
-			typeName = "graphql.ID"
+			a.typeName = "graphql.ID"
 		case "time", "Time":
-			typeName = "time.Time"
+			a.typeName = "time.Time"
 		default:
-			typeName = fmt.Sprintf("scalar.%s", strings.Title(typeName))
+			a.typeName = fmt.Sprintf("scalar.%s", strings.Title(a.typeName))
 		}
 	}
 
-	if isList {
-		if isMandatoryInList {
-			typeName = "[]" + typeName
+	if a.isList {
+		if a.isMandatoryInList {
+			a.typeName = "[]" + a.typeName
 		} else {
-			typeName = "[]*" + typeName
+			a.typeName = "[]*" + a.typeName
 		}
 	}
 
-	if !isMandatory {
-		typeName = "*" + typeName
+	if !a.isMandatory {
+		a.typeName = "*" + a.typeName
 	}
 
 	if json {
-		if isModel {
-			return fmt.Sprintf("	%s %s `json:\"-\"`\n", strings.Title(attribute), strings.Title(typeName))
-		} else if typeName == "*bool" || typeName == "bool" {
-			return fmt.Sprintf("	%s %s `json:\"%s\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
+		if a.isModel {
+			return fmt.Sprintf("	%s %s `json:\"-\"`\n", strings.Title(a.name), strings.Title(a.typeName))
+		} else if a.typeName == "*bool" || a.typeName == "bool" {
+			return fmt.Sprintf("	%s %s `json:\"%s\"`\n", strings.Title(a.name), a.typeName, toSnake(a.name))
 		} else {
-			return fmt.Sprintf("	%s %s `json:\"%s,omitempty\"`\n", strings.Title(attribute), typeName, toSnake(attribute))
+			return fmt.Sprintf("	%s %s `json:\"%s,omitempty\"`\n", strings.Title(a.name), a.typeName, toSnake(a.name))
 		}
 	}
-	if isModel {
-		return fmt.Sprintf("	%s %s", strings.Title(attribute), strings.Title(typeName))
+	if a.isModel {
+		return fmt.Sprintf("	%s %s\n", strings.Title(a.name), strings.Title(a.typeName))
 	}
-	return fmt.Sprintf("	%s %s", strings.Title(attribute), typeName)
+	return fmt.Sprintf("	%s %s\n", strings.Title(a.name), a.typeName)
 }
 
-func getSchemaLine(attribute, typeName string, isMandatory, isList, isMandatoryInList bool) string {
-	typeReturn := typeName
-	switch typeName {
+func getSchemaLine(a attribute) string {
+	var typeReturn string
+	switch a.typeName {
 	case "boolean", "Bool", "bool":
 		typeReturn = "Boolean"
 	case "id", "Id":
 		typeReturn = "ID"
 	case "time", "Time":
-		typeReturn = "String"
-		typeName = "time"
+		typeReturn = "string"
+		if len(a.params) == 0 {
+			p := attribute{name: "format", typeName: "String"}
+			a.params = append(a.params, p)
+		}
 	default:
-		typeReturn = strings.Title(typeReturn)
+		typeReturn = strings.Title(a.typeName)
 	}
 
-	if isList {
-		if isMandatoryInList {
+	if a.isList {
+		if a.isMandatoryInList {
 			typeReturn = "[" + typeReturn + "!]"
 		} else {
 			typeReturn = "[" + typeReturn + "]"
 		}
 	}
 
-	if isMandatory {
+	if a.isMandatory {
 		typeReturn += "!"
 	}
 
-	if typeName != "time" {
-		return fmt.Sprintf("	%s: %s\n", attribute, typeReturn)
+	if len(a.params) == 0 {
+		return fmt.Sprintf("	%s: %s\n", a.name, typeReturn)
 	}
-	return fmt.Sprintf("	%s(format: String): %s\n", attribute, typeReturn)
+
+	params := ""
+	for i := range a.params {
+		if i > 0 {
+			params += ", "
+		}
+		str := strings.Replace(getSchemaLine(a.params[i]), "\n", "", -1)
+		params += strings.TrimSpace(str)
+	}
+
+	return fmt.Sprintf("	%s(%s): %s\n", a.name, params, typeReturn)
 }
 
-func getResolverLine(attribute, typeName string, isModel, isMandatory, isList, isMandatoryInList bool) string {
-	if !isModel {
+func getResolverLine(a attribute) string {
+	if !a.isModel {
 		var typeReturn string
-		switch typeName {
+		switch a.typeName {
 		case "String", "string":
 			typeReturn = "string"
 		case "Int", "int":
@@ -307,39 +374,39 @@ func getResolverLine(attribute, typeName string, isModel, isMandatory, isList, i
 			typeReturn = "graphql.ID"
 		case "time", "Time":
 			typeReturn = "string"
-			typeName = "time"
+			a.typeName = "time"
 		default:
-			typeReturn = fmt.Sprintf("scalar.%s", strings.Title(typeName))
+			typeReturn = fmt.Sprintf("scalar.%s", strings.Title(a.typeName))
 		}
 
-		if isList {
-			if isMandatoryInList {
+		if a.isList {
+			if a.isMandatoryInList {
 				typeReturn = "[]" + typeReturn
 			} else {
 				typeReturn = "[]*" + typeReturn
 			}
 		}
 
-		if !isMandatory {
+		if !a.isMandatory {
 			typeReturn = "*" + typeReturn
 		}
 
-		if typeName != "time" {
+		if a.typeName != "time" {
 			return fmt.Sprintf(`func (r *{{.resolver}}) %s() %s {
 	return r.{{.abbreviation}}.%s
 }
-`, strings.Title(attribute), typeReturn, strings.Title(attribute))
+`, strings.Title(a.name), typeReturn, strings.Title(a.name))
 		}
 
 		return fmt.Sprintf(`func (r *{{.resolver}}) %s(args struct{ Format *string }) %s {
 	return r.{{.abbreviation}}.Get%s(args.Format)
 }
-`, strings.Title(attribute), typeReturn, strings.Title(attribute))
+`, strings.Title(a.name), typeReturn, strings.Title(a.name))
 	}
 
-	typeName = fmt.Sprintf("%s%sResolver", strings.ToLower(string(typeName[0])), typeName[1:])
+	a.typeName = fmt.Sprintf("%s%sResolver", strings.ToLower(string(a.typeName[0])), a.typeName[1:])
 
-	if isList {
+	if a.isList {
 		pointer := "*"
 		address := "&"
 		insideAddress := ""
@@ -358,20 +425,20 @@ func getResolverLine(attribute, typeName string, isModel, isMandatory, isList, i
 	return {{.address}}l
 }
 `
-		if isMandatory {
+		if a.isMandatory {
 			pointer = ""
 			address = ""
 			check = ""
 		}
 
-		if isMandatoryInList {
+		if a.isMandatoryInList {
 			insideAddress = "&"
 		}
 
 		bal = strings.Replace(bal, "{{.check}}", check, -1)
 		bal = strings.Replace(bal, "{{.insideAddress}}", insideAddress, -1)
-		bal = strings.Replace(bal, "{{.attribute}}", strings.Title(attribute), -1)
-		bal = strings.Replace(bal, "{{.typeName}}", typeName, -1)
+		bal = strings.Replace(bal, "{{.attribute}}", strings.Title(a.name), -1)
+		bal = strings.Replace(bal, "{{.typeName}}", a.typeName, -1)
 		bal = strings.Replace(bal, "{{.pointer}}", pointer, -1)
 		bal = strings.Replace(bal, "{{.address}}", address, -1)
 
@@ -380,34 +447,33 @@ func getResolverLine(attribute, typeName string, isModel, isMandatory, isList, i
 	}
 
 	address := ""
-	if isMandatory {
+	if a.isMandatory {
 		address = "&"
 	}
 
 	return fmt.Sprintf(`func (r *{{.resolver}}) %s() *%s {
 	return &%s{%sr.{{.abbreviation}}.%s}
 }
-`, strings.Title(attribute), typeName, typeName, address, strings.Title(attribute))
+`, strings.Title(a.name), a.typeName, a.typeName, address, strings.Title(a.name))
 }
 
-func getModelMethods(attribute, typeName string, isModel, isMandatory, isList, isMandatoryInList bool) string {
-	if !isModel {
-		switch typeName {
+func getModelMethods(a attribute) string {
+	if !a.isModel {
+		switch a.typeName {
 		case "time", "Time":
-			data := map[string]interface{}{"attribute": attribute, "abbreviation": toAbbreviation(attribute), "Attribute": strings.Title(attribute), "type": "%s"}
-			if !isMandatory {
+			data := map[string]interface{}{"attribute": a.name, "abbreviation": toAbbreviation(a.name), "Attribute": strings.Title(a.name), "type": "%s"}
+			if !a.isMandatory {
 				data["notMandatory"] = "*"
 			}
-			if isList {
+			if a.isList {
 				data["list"] = "[]"
-				if !isMandatoryInList {
+				if !a.isMandatoryInList {
 					data["notInList"] = "*"
 				}
 			}
 			return executeTemplate(templates["getDate"], data)
 		}
 	}
-
 	return ""
 }
 

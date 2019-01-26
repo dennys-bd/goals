@@ -14,7 +14,7 @@
 #### scaffold graphql
 `goals s g MODELNAME 'attributeName:AttributeType! relationName:type:[ModelName]!'`
 should create a suitable model, schema and resolver structures for your new type  
-For now you should use simple quote in your attributes.  
+For now you should use simple quote in your attributes, -Use Spaces to separate the attributes-.  
 Flags:
   * `--json`
    It creates a model genarating json value for each attribute of model.
@@ -26,6 +26,9 @@ Flags:
    Don't create the resolver. (Use it if you alread have a resolver)
   * `--resolver` or `-r`
    Change the resolver name for your model.
+  * `--verbose` or `-v`
+   Is a way of creating your params for the attribute, and create each attribute separately. (You can use spaces now)
+   NO QUITE READY YET.
 
 #### scaffold auth
 `goals s auth`
