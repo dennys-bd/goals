@@ -374,7 +374,10 @@ func getResolverLine(a attribute) string {
 			typeReturn = "graphql.ID"
 		case "time", "Time":
 			typeReturn = "string"
-			a.typeName = "time"
+			if len(a.params) == 0 {
+				p := attribute{name: "format", typeName: "String"}
+				a.params = append(a.params, p)
+			}
 		default:
 			typeReturn = fmt.Sprintf("scalar.%s", strings.Title(a.typeName))
 		}
@@ -391,17 +394,28 @@ func getResolverLine(a attribute) string {
 			typeReturn = "*" + typeReturn
 		}
 
-		if a.typeName != "time" {
-			return fmt.Sprintf(`func (r *{{.resolver}}) %s() %s {
-	return r.{{.abbreviation}}.%s
-}
-`, strings.Title(a.name), typeReturn, strings.Title(a.name))
+		params := ""
+		for i := range a.params {
+			if i == 0 {
+				params += "args struct {\n"
+			}
+			params += getResolverParams(a.params[i]) + "\n"
+			if i == len(a.params)-1 {
+				params += "}"
+			}
 		}
 
-		return fmt.Sprintf(`func (r *{{.resolver}}) %s(args struct{ Format *string }) %s {
+		if a.typeName != "time" {
+			return fmt.Sprintf(`func (r *{{.resolver}}) %s(%s) %s {
+	return r.{{.abbreviation}}.%s
+}
+`, strings.Title(a.name), params, typeReturn, strings.Title(a.name))
+		}
+
+		return fmt.Sprintf(`func (r *{{.resolver}}) %s(%s) %s {
 	return r.{{.abbreviation}}.Get%s(args.Format)
 }
-`, strings.Title(a.name), typeReturn, strings.Title(a.name))
+`, strings.Title(a.name), params, typeReturn, strings.Title(a.name))
 	}
 
 	a.typeName = fmt.Sprintf("%s%sResolver", strings.ToLower(string(a.typeName[0])), a.typeName[1:])
@@ -443,7 +457,6 @@ func getResolverLine(a attribute) string {
 		bal = strings.Replace(bal, "{{.address}}", address, -1)
 
 		return bal
-
 	}
 
 	address := ""
@@ -455,6 +468,47 @@ func getResolverLine(a attribute) string {
 	return &%s{%sr.{{.abbreviation}}.%s}
 }
 `, strings.Title(a.name), a.typeName, a.typeName, address, strings.Title(a.name))
+}
+
+func getResolverParams(a attribute) string {
+	var typeReturn string
+	if !a.isModel {
+		switch a.typeName {
+		case "String", "string":
+			typeReturn = "string"
+		case "Int", "int":
+			typeReturn = "int32"
+		case "Float", "float":
+			typeReturn = "float64"
+		case "Boolean", "boolean", "Bool", "bool":
+			typeReturn = "bool"
+		case "ID", "id":
+			typeReturn = "graphql.ID"
+		case "time", "Time":
+			typeReturn = "string"
+			if len(a.params) == 0 {
+				p := attribute{name: "format", typeName: "String"}
+				a.params = append(a.params, p)
+			}
+		default:
+			typeReturn = fmt.Sprintf("scalar.%s", strings.Title(a.typeName))
+		}
+	} else {
+		typeReturn = fmt.Sprintf("model.%s", strings.Title(a.typeName))
+	}
+
+	if a.isList {
+		if a.isMandatoryInList {
+			typeReturn = "[]" + typeReturn
+		} else {
+			typeReturn = "[]*" + typeReturn
+		}
+	}
+
+	if !a.isMandatory {
+		typeReturn = "*" + typeReturn
+	}
+	return fmt.Sprintf("	%s %s", strings.Title(a.name), typeReturn)
 }
 
 func getModelMethods(a attribute) string {
