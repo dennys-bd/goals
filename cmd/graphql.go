@@ -173,9 +173,11 @@ func getTemplates(args []string) (model, schema, resolver, modelMethods string) 
 			rl := getResolverLine(attr)
 
 			fmt.Printf("ModelLine: %s", ml)
-			fmt.Printf("ModelMethods: %s\n", strings.Trim(mml, "\n"))
+			if mml != "" {
+				fmt.Printf("ModelMethods: \n%s\n", strings.Trim(mml, "\n"))
+			}
 			fmt.Printf("SchemaLine: %s\n", strings.Trim(sl, "\n"))
-			fmt.Printf("ResolverLine: %s\n", rl)
+			fmt.Printf("ResolverLine: \n%s\n", rl)
 
 			print("Is it correct? (Y/n) ")
 			ru, _, _ := r.ReadRune()
@@ -321,7 +323,7 @@ func getSchemaLine(a attribute) string {
 	case "id", "Id":
 		typeReturn = "ID"
 	case "time", "Time":
-		typeReturn = "string"
+		typeReturn = "String"
 		if len(a.params) == 0 {
 			p := attribute{name: "format", typeName: "String"}
 			a.params = append(a.params, p)
@@ -361,6 +363,7 @@ func getSchemaLine(a attribute) string {
 func getResolverLine(a attribute) string {
 	if !a.isModel {
 		var typeReturn string
+		var withFormat bool
 		switch a.typeName {
 		case "String", "string":
 			typeReturn = "string"
@@ -375,8 +378,7 @@ func getResolverLine(a attribute) string {
 		case "time", "Time":
 			typeReturn = "string"
 			if len(a.params) == 0 {
-				p := attribute{name: "format", typeName: "String"}
-				a.params = append(a.params, p)
+				withFormat = true
 			}
 		default:
 			typeReturn = fmt.Sprintf("scalar.%s", strings.Title(a.typeName))
@@ -405,17 +407,17 @@ func getResolverLine(a attribute) string {
 			}
 		}
 
-		if a.typeName != "time" {
+		if !withFormat {
 			return fmt.Sprintf(`func (r *{{.resolver}}) %s(%s) %s {
 	return r.{{.abbreviation}}.%s
 }
 `, strings.Title(a.name), params, typeReturn, strings.Title(a.name))
 		}
 
-		return fmt.Sprintf(`func (r *{{.resolver}}) %s(%s) %s {
+		return fmt.Sprintf(`func (r *{{.resolver}}) %s(args struct{ Format *string }) %s {
 	return r.{{.abbreviation}}.Get%s(args.Format)
 }
-`, strings.Title(a.name), params, typeReturn, strings.Title(a.name))
+`, strings.Title(a.name), typeReturn, strings.Title(a.name))
 	}
 
 	a.typeName = fmt.Sprintf("%s%sResolver", strings.ToLower(string(a.typeName[0])), a.typeName[1:])
@@ -464,10 +466,21 @@ func getResolverLine(a attribute) string {
 		address = "&"
 	}
 
-	return fmt.Sprintf(`func (r *{{.resolver}}) %s() *%s {
+	params := ""
+	for i := range a.params {
+		if i == 0 {
+			params += "args struct {\n"
+		}
+		params += getResolverParams(a.params[i]) + "\n"
+		if i == len(a.params)-1 {
+			params += "}"
+		}
+	}
+
+	return fmt.Sprintf(`func (r *{{.resolver}}) %s(%s) *%s {
 	return &%s{%sr.{{.abbreviation}}.%s}
 }
-`, strings.Title(a.name), a.typeName, a.typeName, address, strings.Title(a.name))
+`, strings.Title(a.name), params, a.typeName, a.typeName, address, strings.Title(a.name))
 }
 
 func getResolverParams(a attribute) string {
@@ -512,7 +525,7 @@ func getResolverParams(a attribute) string {
 }
 
 func getModelMethods(a attribute) string {
-	if !a.isModel {
+	if !a.isModel && len(a.params) == 0 {
 		switch a.typeName {
 		case "time", "Time":
 			data := map[string]interface{}{"attribute": a.name, "abbreviation": toAbbreviation(a.name), "Attribute": strings.Title(a.name), "type": "%s"}
@@ -532,7 +545,7 @@ func getModelMethods(a attribute) string {
 }
 
 func separateLine(line string) map[string]string {
-	r := regexp.MustCompile(`(?P<attribute>[a-z][a-zA-Z0-9]*)(?P<params>\([[a-z][a-zA-Z0-9]*\: ?[a-zA-Z0-9]+!?\)]*)?\: ?(?P<result>([a-zA-Z0-9]*!?)|(\[a-zA-Z0-9]*!?\]!?))`)
+	r := regexp.MustCompile(`\A(?P<attribute>[a-z][a-zA-Z0-9]*)(?P<params>\(([a-z][a-zA-Z0-9]*\: ?(([a-zA-Z0-9]+!?)|(\[[a-zA-Z0-9]+!?\]!?))(, ?)?)+\))?\: ?(?P<return>([a-zA-Z0-9]+!?)|(\[[a-zA-Z0-9]+!?\]!?))\z`)
 
 	match := r.FindStringSubmatch(line)
 	result := make(map[string]string)
