@@ -12,10 +12,10 @@
 
 ### goals scaffold
 #### scaffold graphql
-- Usage:
+##### Usage:
 You can generate a entire model in a syntax rails like, is recommended to use simple quote on the fields of model coz `]!` characters is reserved for bash terminals. DONT USE WHITE SPACES, it's used to separate the fields ;)
 `goals s g <modelname> 'fieldName(param:ParamType,param2:ParamType2):fieldType! relationName:type:[ModelName]!'`
-
+##### Verbose:
 Eventually you can create your model inserting it's fields in line by line using the verbose flag (-v)
 `goals s g <modelname> -v`
 
