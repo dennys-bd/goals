@@ -12,7 +12,19 @@
 
 ### goals scaffold
 #### scaffold graphql
-`goals s g MODELNAME 'attributeName:AttributeType! relationName:type:[ModelName]!'`
+- Usage:
+You can generate a entire model in a syntax rails like, is recommended to use simple quote on the fields of model coz `]!` characters is reserved for bash terminals. DONT USE WHITE SPACES, it's used to separate the fields ;)
+`goals s g <modelname> 'fieldName(param:ParamType,param2:ParamType2):fieldType! relationName:type:[ModelName]!'`
+
+Eventually you can create your model inserting it's fields in line by line using the verbose flag (-v)
+`goals s g <modelname> -v`
+
+Console will ask you to insert the first field you can write something like this: (there is no problem using whitespaces where)
+`fieldName(param: ParamType, param2: ParamType2): FieldType!`
+
+then console will print informations about the field and you can confirm or erase this field
+if confirmed it will asks to create another field until you send a blank line.
+
 should create a suitable model, schema and resolver structures for your new type  
 For now you should use simple quote in your attributes, -Use Spaces to separate the attributes-.  
 Flags:
@@ -60,7 +72,7 @@ Flags:
 * [x] goals core to facilitate serving pages
 * [x] create runserver command
 * [x] environment separation ready (dotEnv)
-* [ ] accept params to resolver on scaffolding model
+* [x] accept params to resolver on scaffolding model
 * [ ] scalar Image
 * [ ] database integration:
   * [ ] save model directive (databases or gateway)
