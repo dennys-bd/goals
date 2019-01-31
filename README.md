@@ -5,7 +5,10 @@
 `go get github.com/dennys-bd/goals`
 
 ## usage
-`goals` has 3 main commands today
+`goals` has 3 main commands today:
+- init: Used to generate a basic Goals project
+- scaffold: Used to create GraphQL Models, Schemas and Resolvers
+- runserver: Used to start the goals application
 
 ### goals init
 `goals init PROJECTNAME` should start your project under your $GOPATH/src
@@ -13,10 +16,11 @@
 ### goals scaffold
 #### scaffold graphql
 ##### Usage:
-You can generate a entire model in a syntax rails like, is recommended to use simple quote on the fields of model coz `]!` characters is reserved for bash terminals. DONT USE WHITE SPACES, it's used to separate the fields ;)
+You can generate a entire model in a syntax rails like, is recommended to use simple quote on the fields of model coz `]!` characters is reserved for bash terminals.   
+ALSO, DONT USE WHITE SPACES, it's used to separate the fields ;)
 `goals s g <modelname> 'fieldName(param:ParamType,param2:ParamType2):fieldType! relationName:type:[ModelName]!'`
 ##### Verbose:
-Eventually you can create your model inserting it's fields in line by line using the verbose flag (-v)
+You can create your model inserting it's fields in line by line using the verbose flag (-v)
 `goals s g <modelname> -v`
 
 Console will ask you to insert the first field you can write something like this: (there is no problem using whitespaces where)
@@ -27,7 +31,7 @@ if confirmed it will asks to create another field until you send a blank line.
 
 should create a suitable model, schema and resolver structures for your new type  
 For now you should use simple quote in your attributes, -Use Spaces to separate the attributes-.  
-Flags:
+##### Flags:
   * `--json`
    It creates a model genarating json value for each attribute of model.
   * `--no-model`
@@ -43,6 +47,7 @@ Flags:
    NO QUITE READY YET.
 
 #### scaffold auth
+##### Usage:
 `goals s auth`
 should create a private resolver, with it's auth structures.
 
@@ -50,9 +55,10 @@ covering commun graphql types: String, Int, Boolean, ID, Float, and Time from `g
 Every other type will be treated as Scalar if you don't specifically declare type before modelName
 
 ### goals runserver
+##### Usage:
 `goals r`
 Start your server with some goals pattern configurations.  
-Flags:
+##### Flags:
   * `--port` or `-p`
    Change the port to serv your goals application
   * `--env-port`
