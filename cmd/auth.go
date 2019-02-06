@@ -1,3 +1,4 @@
+// Package cmg provides the comands for Goals
 package cmd
 
 import (

@@ -10,6 +10,7 @@
 - scaffold: Used to create GraphQL Models, Schemas and Resolvers
 - runserver: Used to start the goals application
 
+## commands
 ### goals init
 `goals init PROJECTNAME` should start your project under your $GOPATH/src
 
@@ -76,9 +77,8 @@ Start your server with some goals pattern configurations.
 * [x] command scaffold graphql
 * [x] command scaffold auth
 * [x] goals core to facilitate serving pages
-* [x] create runserver command
+* [x] command runserver
 * [x] environment separation ready (dotEnv)
-* [x] accept params to resolver on scaffolding model
 * [ ] scalar Image
 * [ ] database integration:
   * [ ] save model directive (databases or gateway)
