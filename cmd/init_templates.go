@@ -228,7 +228,7 @@ func getDateInFormat(date *time.Time, format *string) *string {
 		}
 		str := date.Format(time.RFC3339)
 		return &str
-	}
+	} 
 	return nil
 }
 

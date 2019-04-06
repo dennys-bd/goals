@@ -1,12 +1,11 @@
-package auth
+package core
 
 import (
 	"context"
 	"net/http"
 )
 
-// InjectAuthToContext to be creating
-func InjectAuthToContext(next http.Handler, headers ...string) http.Handler {
+func injectAuthToContext(next http.Handler, headers ...string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if (*r).Method == "OPTIONS" {
 			return

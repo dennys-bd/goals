@@ -1,3 +1,8 @@
+// Package core create your graphql server
+//
+// This package has functions to mount the schema
+// and server your application, authenticate,
+// serve static file, etc.
 package core
 
 import (
@@ -10,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dennys-bd/goals/auth"
 	"github.com/dennys-bd/goals/graphql"
 	"github.com/dennys-bd/goals/graphql/relay"
 	errs "github.com/dennys-bd/goals/shortcuts/errors"
@@ -73,13 +77,13 @@ func Server() {
 		if corsOptions != nil {
 			c := cors.New(*corsOptions)
 			if res, ok := reg.resolver.(graphql.PrivateResolver); ok {
-				http.Handle("/graphql"+reg.endpoint, c.Handler(auth.InjectAuthToContext(&relay.Handler{Schema: schema}, res.GetAuthHeaders()...)))
+				http.Handle("/graphql"+reg.endpoint, c.Handler(injectAuthToContext(&relay.Handler{Schema: schema}, res.GetAuthHeaders()...)))
 			} else {
 				http.Handle("/graphql"+reg.endpoint, c.Handler(&relay.Handler{Schema: schema}))
 			}
 		} else {
 			if res, ok := reg.resolver.(graphql.PrivateResolver); ok {
-				http.Handle("/graphql"+reg.endpoint, auth.InjectAuthToContext(&relay.Handler{Schema: schema}, res.GetAuthHeaders()...))
+				http.Handle("/graphql"+reg.endpoint, injectAuthToContext(&relay.Handler{Schema: schema}, res.GetAuthHeaders()...))
 			} else {
 				http.Handle("/graphql"+reg.endpoint, &relay.Handler{Schema: schema})
 			}
