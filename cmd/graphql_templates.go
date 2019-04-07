@@ -17,6 +17,14 @@ type {{.Name}} struct {
 {{.methods}} 
 `
 
+	templates["scafmodelresolver"] = `package model
+
+{{if .importpath}}{{.importpath}}{{end}}// {{.Name}} Model
+type {{.Name}} struct {
+{{.model}}}	
+
+{{.resolver}}`
+
 	templates["scafschema"] = `package schema
 
 // Your {{.Name}} model's Schema

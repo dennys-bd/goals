@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var resolver string
+var gqlResolverName string
 var json, gqlVerbose, noGqllModel, noGqlSchema, noGqlResolver bool
 
 type attribute struct {
@@ -50,24 +50,66 @@ it's structure, nammed: Model, Schema and Resolver.`,
 func createFiles(name string, args []string, project core.Project) {
 	model, schema, resolver, modelMethods := getTemplates(args)
 	name = strings.Title(name)
-	if !noGqllModel {
-		writeModel(name, modelMethods, model, project)
+	if gqlResolverName == "" && !noGqllModel {
+		writeModelResolver(name, modelMethods, model, resolver, project)
+	} else {
+		writeResolver(name, resolver, project)
+
+		if !noGqllModel {
+			writeModel(name, modelMethods, model, project)
+		}
 	}
 	if !noGqlSchema {
 		writeSchema(name, schema, project)
 	}
-	if !noGqlResolver {
-		writeResolver(name, resolver, project)
-	}
 }
 
 func init() {
-	gqlCmd.Flags().StringVarP(&resolver, "resolver", "r", "", "Name to the resolver variable of your model")
 	gqlCmd.Flags().BoolVar(&json, "json", false, "Use it if you want to generate the json attributes of your model")
-	gqlCmd.Flags().BoolVar(&noGqllModel, "no-model", false, "Use this flag if you want to graphql command to don't create the model")
+	gqlCmd.Flags().BoolVar(&noGqllModel, "no-model", false, "Use this flag if you want to graphql command to don't create the model, will create a resolver file, with the modelsNameResolver resolver")
 	gqlCmd.Flags().BoolVar(&noGqlSchema, "no-schema", false, "Use this flag if you want to graphql command to don't create the schema")
-	gqlCmd.Flags().BoolVar(&noGqlResolver, "no-resolver", false, "Use this flag if you want to graphql command to don't create the resolver")
 	gqlCmd.Flags().BoolVarP(&gqlVerbose, "verbose", "v", false, "Verbose will give the opportunity create your model line by line")
+	gqlCmd.Flags().StringVarP(&gqlResolverName, "resolver", "r", "", "Create a separated resolver file for your model (insert the resolver name)")
+}
+
+func writeModelResolver(name, methods, modelTemplate, resolverTemplate string, project core.Project) {
+	importpath := ""
+	countImports := 0
+	if strings.Index(modelTemplate, "graphql.ID") > -1 || strings.Index(resolverTemplate, "graphql.ID") > -1 {
+		importpath += "\"github.com/dennys-bd/goals/graphql\"\n"
+		countImports++
+	}
+	if strings.Index(modelTemplate, "scalar.") > -1 || strings.Index(resolverTemplate, "scalar.") > -1 {
+		importpath += fmt.Sprintf("	\"%v/app/scalar\"\n", project.ImportPath)
+		countImports++
+	}
+	if strings.Index(modelTemplate, "time.Time") > -1 || strings.Index(resolverTemplate, "time.Time") > -1 {
+		importpath = "	\"time\"\n"
+		countImports++
+	}
+
+	data := map[string]interface{}{"resolver": name, "abbreviation": toAbbreviation(name)}
+
+	resolverTemplate = executeTemplate(resolverTemplate, data)
+
+	if countImports > 1 {
+		importpath = fmt.Sprintf("import (\n%v)\n\n", importpath)
+		data = map[string]interface{}{"model": modelTemplate, "resolver": resolverTemplate, "Name": name, "importpath": importpath}
+	} else if countImports == 1 {
+		importpath = "import " + importpath
+		data = map[string]interface{}{"model": modelTemplate, "resolver": resolverTemplate, "Name": name, "importpath": importpath}
+	} else {
+		data = map[string]interface{}{"model": modelTemplate, "resolver": resolverTemplate, "Name": name}
+	}
+
+	modelScript := executeTemplate(templates["scafmodelresolver"], data)
+	modelScript += methods
+	modelScript = strings.Replace(modelScript, "&#34;", "\"", -1)
+	modelScript = strings.Replace(modelScript, "&amp;", "&", -1)
+	modelScript = strings.Replace(modelScript, "model_name", name, -1)
+	modelScript = strings.Replace(modelScript, "&#39;", "'", -1)
+
+	writeStringToFile(filepath.Join("app/model", fmt.Sprintf("%s.go", strings.ToLower(name))), modelScript)
 }
 
 func writeModel(name, methods, template string, project core.Project) {
@@ -115,8 +157,8 @@ func writeSchema(name string, template string, project core.Project) {
 }
 
 func writeResolver(name string, template string, project core.Project) {
-	if resolver == "" {
-		resolver = fmt.Sprintf("%s%sResolver", strings.ToLower(string(name[0])), name[1:])
+	if gqlResolverName == "" {
+		gqlResolverName = fmt.Sprintf("%s%sResolver", strings.ToLower(string(name[0])), name[1:])
 	}
 	abbreviation := toAbbreviation(name)
 
@@ -142,7 +184,7 @@ func writeResolver(name string, template string, project core.Project) {
 		importpath = "import " + importpath + "\n"
 	}
 
-	data := map[string]string{"Name": name, "abbreviation": abbreviation, "resolver": resolver, "importpath": importpath}
+	data := map[string]string{"Name": name, "abbreviation": abbreviation, "resolver": gqlResolverName, "importpath": importpath}
 
 	template = replaceTemplate(template, data)
 
@@ -407,6 +449,13 @@ func getResolverLine(a attribute) string {
 			}
 		}
 
+		if gqlResolverName == "" {
+			return fmt.Sprintf(`func ({{.abbreviation}} *{{.resolver}}) %s(%s) %s {
+	return {{.abbreviation}}.%s
+}
+`, strings.ToUpper(a.name), params, typeReturn, strings.Title(a.name))
+		}
+
 		if !withFormat {
 			return fmt.Sprintf(`func (r *{{.resolver}}) %s(%s) %s {
 	return r.{{.abbreviation}}.%s
@@ -475,6 +524,13 @@ func getResolverLine(a attribute) string {
 		if i == len(a.params)-1 {
 			params += "}"
 		}
+	}
+
+	if gqlResolverName == "" {
+		return fmt.Sprintf(`func ({{.abbreviation}} *{{.resolver}}) %s(%s) *%s {
+	return &%s{%s{{.abbreviation}}.%s}
+}
+`, strings.ToUpper(a.name), params, a.typeName, a.typeName, address, strings.Title(a.name))
 	}
 
 	return fmt.Sprintf(`func (r *{{.resolver}}) %s(%s) *%s {
