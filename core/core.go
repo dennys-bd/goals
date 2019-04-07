@@ -1,8 +1,8 @@
-// Package core create your graphql server
-//
-// This package has functions to mount the schema
-// and server your application, authenticate,
-// serve static file, etc.
+/*Package core create your graphql server
+
+This package has functions to mount the schema
+and server your application, authenticate,
+serve static file, etc.*/
 package core
 
 import (
@@ -51,10 +51,10 @@ func RegisterSchema(endpoint string, schema Schema, resolver interface{}, opt ..
 	registers = append(registers, r)
 }
 
-// RegisterPrivateSchema register your private schema to a resolver in an endpoint
-//
-// RegisterPrivateSchema only calls RegisterSchema, but you may to use it if you want
-// to garantee that your resolver is a PrivateResolver and you have a closed Schema.
+/* RegisterPrivateSchema register your private schema to a resolver in an endpoint
+
+RegisterPrivateSchema only calls RegisterSchema, but you may to use it if you want
+to garantee that your resolver is a PrivateResolver and you have a closed Schema. */
 func RegisterPrivateSchema(endpoint string, schema Schema, resolver graphql.PrivateResolver, opt ...graphql.SchemaOpt) {
 	RegisterSchema(endpoint, schema, resolver, opt...)
 }
